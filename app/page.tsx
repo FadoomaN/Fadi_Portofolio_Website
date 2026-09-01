@@ -1,35 +1,10 @@
-import HeaderControls from './header-controls';
-import { navigationItems, siteContent } from './site-content';
+import SiteHeader from './site-header';
+import { siteContent } from './site-content';
 
 export default function Home() {
   return (
     <main className="blank-canvas">
-      <header className="engineering-header">
-        <a className="header-brand" href="#" aria-label="Fadi Al Hazim, home">
-          <span className="brand-mark" aria-hidden="true" />
-          <span>{siteContent.brand}</span>
-        </a>
-
-        <nav className="header-nav" aria-label="Primary navigation">
-          {navigationItems.map((item) => (
-            <a
-              className={`nav-link${item.current ? ' nav-home' : ''}`}
-              href={item.href}
-              aria-current={item.current ? 'page' : undefined}
-              key={item.href}
-            >
-              {item.current ? (
-                <span className="home-icon" aria-hidden="true" />
-              ) : (
-                <span className="nav-index">{item.index}</span>
-              )}
-              <span className="nav-label">{item.label}</span>
-            </a>
-          ))}
-        </nav>
-
-        <HeaderControls />
-      </header>
+      <SiteHeader homeIsCurrent />
 
       <section className="home-hero" aria-labelledby="hero-title">
         <div className="hero-zone" aria-hidden="true" />

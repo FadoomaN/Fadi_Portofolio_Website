@@ -24,7 +24,7 @@ function applyTheme(mode: ThemeMode) {
   document.documentElement.dataset.themeMode = mode;
 }
 
-export default function HeaderControls() {
+export default function HeaderControls({ homeIsCurrent = false }: { homeIsCurrent?: boolean }) {
   const [mode, setMode] = useState<ThemeMode>('system');
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
   const [isSwitching, setIsSwitching] = useState(false);
@@ -117,7 +117,7 @@ export default function HeaderControls() {
             <a
               className="mobile-nav-link"
               href={item.href}
-              aria-current={item.current ? 'page' : undefined}
+              aria-current={homeIsCurrent && item.current ? 'page' : undefined}
               tabIndex={navigationOpen ? 0 : -1}
               key={item.href}
               onClick={() => setOpenMenu(null)}

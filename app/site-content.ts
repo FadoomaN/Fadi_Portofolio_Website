@@ -12,9 +12,9 @@ export const siteContent = {
     },
   },
   navigation: [
-    { href: '#', label: 'Home', index: '01', current: true },
-    { href: '#about', label: 'About', index: '02', current: false },
-    { href: '#lab', label: 'Lab', index: '03', current: false },
+    { href: '/', label: 'Home', index: '01', current: true },
+    { href: '/#about', label: 'About', index: '02', current: false },
+    { href: '/#lab', label: 'Lab', index: '03', current: false },
   ],
 } as const;
 
