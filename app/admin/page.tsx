@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import SiteHeader from '../site-header';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import AdminWorkspace from './admin-workspace';
 
 export default async function AdminPage() {
   const supabase = await createServerSupabaseClient();
@@ -16,47 +17,59 @@ export default async function AdminPage() {
 
   if (!membership) redirect('/login');
 
-  const [{ count: projectCount }, { count: videoCount }] = await Promise.all([
-    supabase.from('projects').select('*', { count: 'exact', head: true }),
-    supabase.from('videos').select('*', { count: 'exact', head: true }),
+  const [{ data: factors }, { data: assurance }] = await Promise.all([
+    supabase.auth.mfa.listFactors(),
+    supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+  ]);
+  const hasVerifiedAuthenticator = factors?.totp.some((factor) => factor.status === 'verified');
+
+  // A password-only session never reaches the private control surface.
+  if (!hasVerifiedAuthenticator || assurance?.currentLevel !== 'aal2') {
+    redirect('/authenticator');
+  }
+
+  const [experienceResult, projectResult, videoResult, profileResult, privateContactResult] = await Promise.all([
+    supabase
+      .from('experiences')
+      .select('id, organization, role, employment_type, location, summary, start_date, end_date, is_current, status, sort_order, updated_at', { count: 'exact' })
+      .order('sort_order', { ascending: true })
+      .order('start_date', { ascending: false }),
+    supabase
+      .from('projects')
+      .select('id, title, status, updated_at', { count: 'exact' })
+      .order('updated_at', { ascending: false })
+      .limit(6),
+    supabase
+      .from('videos')
+      .select('id, title, status, updated_at', { count: 'exact' })
+      .order('updated_at', { ascending: false })
+      .limit(6),
+    supabase
+      .from('site_profile')
+      .select('first_name, last_name, role, kicker, updated_at')
+      .eq('id', 1)
+      .maybeSingle(),
+    supabase
+      .from('admin_contact_settings')
+      .select('operations_email, phone_number, timezone, updated_at')
+      .eq('user_id', user.id)
+      .maybeSingle(),
   ]);
 
   return (
     <>
       <SiteHeader revealImmediately />
       <main className="admin-canvas">
-        <section className="admin-panel">
-          <div className="admin-heading">
-            <span>Control room / 001</span>
-            <span className="admin-online"><i /> Database online</span>
-          </div>
-          <div className="admin-title-row">
-            <div>
-              <p>Private workspace</p>
-              <h1>ADMIN SYSTEM</h1>
-            </div>
-            <form action="/api/auth/logout" method="post">
-              <button className="admin-logout" type="submit">Sign out</button>
-            </form>
-          </div>
-          <div className="admin-metrics">
-            <article>
-              <span>01 / Projects</span>
-              <strong>{String(projectCount ?? 0).padStart(2, '0')}</strong>
-              <small>Expandable content module</small>
-            </article>
-            <article>
-              <span>02 / Videos</span>
-              <strong>{String(videoCount ?? 0).padStart(2, '0')}</strong>
-              <small>View tracking comes next</small>
-            </article>
-            <article>
-              <span>03 / Access</span>
-              <strong>01</strong>
-              <small>Single administrator</small>
-            </article>
-          </div>
-        </section>
+        <AdminWorkspace
+          experiences={experienceResult.data ?? []}
+          projects={projectResult.data ?? []}
+          videos={videoResult.data ?? []}
+          experienceCount={experienceResult.count ?? 0}
+          projectCount={projectResult.count ?? 0}
+          videoCount={videoResult.count ?? 0}
+          profile={profileResult.data}
+          privateContact={privateContactResult.data}
+        />
       </main>
     </>
   );

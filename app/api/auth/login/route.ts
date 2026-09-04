@@ -5,7 +5,7 @@ import { getAdminLoginEnv, getSupabaseEnv } from '@/lib/supabase/env';
 const GENERIC_AUTH_ERROR = 'Incorrect username or password.';
 
 export async function POST(request: NextRequest) {
-  let response = NextResponse.json({ ok: true });
+  let response = NextResponse.json({ ok: true, next: '/authenticator' });
   const { url, publishableKey } = getSupabaseEnv();
   const admin = getAdminLoginEnv();
 
@@ -61,5 +61,6 @@ export async function POST(request: NextRequest) {
     return response;
   }
 
+  // Every successful password login continues through the authenticator gate.
   return response;
 }

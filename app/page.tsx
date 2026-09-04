@@ -1,7 +1,21 @@
 import SiteHeader from './site-header';
 import { siteContent } from './site-content';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createServerSupabaseClient();
+  const { data: storedProfile } = await supabase
+    .from('site_profile')
+    .select('first_name, last_name, role, kicker')
+    .eq('id', 1)
+    .maybeSingle();
+  const profile = {
+    firstName: storedProfile?.first_name ?? siteContent.profile.firstName,
+    lastName: storedProfile?.last_name ?? siteContent.profile.lastName,
+    role: storedProfile?.role ?? siteContent.profile.role,
+    kicker: storedProfile?.kicker ?? siteContent.profile.kicker,
+  };
+
   return (
     <main className="blank-canvas">
       <SiteHeader homeIsCurrent />
@@ -11,18 +25,18 @@ export default function Home() {
 
         <div className="hero-copy">
           <p className="hero-kicker">
-            <span>{siteContent.profile.kicker}</span>
+            <span>{profile.kicker}</span>
             <span className="hero-kicker-line" aria-hidden="true" />
           </p>
 
           <h1 id="hero-title">
-            <span>{siteContent.profile.firstName}</span>
-            <span>{siteContent.profile.lastName}</span>
+            <span>{profile.firstName}</span>
+            <span>{profile.lastName}</span>
           </h1>
 
           <div className="hero-role">
             <span className="role-line" aria-hidden="true" />
-            <p>{siteContent.profile.role}</p>
+            <p>{profile.role}</p>
           </div>
         </div>
 
@@ -31,7 +45,10 @@ export default function Home() {
           <div className="portrait-window">
             {/* Vinext's current Next Image shim crashes during local hydration, so keep this native. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={siteContent.profile.portrait.src} alt={siteContent.profile.portrait.alt} />
+            <img
+              src={siteContent.profile.portrait.src}
+              alt={`${profile.firstName} ${profile.lastName} wearing a gray suit`}
+            />
           </div>
           <span className="portrait-frame portrait-frame-bottom" aria-hidden="true" />
         </figure>
@@ -54,7 +71,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="intro" aria-label="Fadi Al Hazim">
+      <section className="intro" aria-label={`${profile.firstName} ${profile.lastName}`}>
         <div className="intro-scene">
           <div className="falling-cube">
             <span className="cube-shine" />
@@ -71,8 +88,8 @@ export default function Home() {
           </div>
 
           <h1 className="intro-name">
-            <span>{siteContent.profile.firstName}</span>
-            <span>{siteContent.profile.lastName}</span>
+            <span>{profile.firstName}</span>
+            <span>{profile.lastName}</span>
           </h1>
         </div>
       </section>

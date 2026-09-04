@@ -3,16 +3,19 @@
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-export default function LoginForm({ defaultUsername }: { defaultUsername: string }) {
+export default function LoginForm() {
   const router = useRouter();
-  const [username, setUsername] = useState(defaultUsername);
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRecovering, setIsRecovering] = useState(false);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError('');
+    setNotice('');
     setIsSubmitting(true);
 
     try {
@@ -22,19 +25,46 @@ export default function LoginForm({ defaultUsername }: { defaultUsername: string
         body: JSON.stringify({ username, password }),
       });
 
-      const result = (await response.json()) as { error?: string };
+      const result = (await response.json()) as { error?: string; next?: string };
 
       if (!response.ok) {
         setError(result.error ?? 'Unable to sign in.');
         return;
       }
 
-      router.replace('/admin');
+      router.replace(result.next ?? '/admin');
       router.refresh();
     } catch {
       setError('Connection unavailable. Try again.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleRecovery = async () => {
+    setError('');
+    setNotice('');
+
+    if (!username.trim()) {
+      setError('Enter your username first.');
+      return;
+    }
+
+    setIsRecovering(true);
+
+    try {
+      const response = await fetch('/api/auth/recover', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username }),
+      });
+
+      if (!response.ok) throw new Error('Recovery request failed');
+      setNotice('If the username is valid, a secure reset link has been sent.');
+    } catch {
+      setError('Unable to start password recovery. Try again later.');
+    } finally {
+      setIsRecovering(false);
     }
   };
 
@@ -53,6 +83,7 @@ export default function LoginForm({ defaultUsername }: { defaultUsername: string
             autoComplete="username"
             spellCheck={false}
             required
+            autoFocus
           />
         </div>
       </div>
@@ -73,8 +104,21 @@ export default function LoginForm({ defaultUsername }: { defaultUsername: string
         </div>
       </div>
 
+      <button
+        className="login-recovery"
+        type="button"
+        disabled={isSubmitting || isRecovering}
+        onClick={handleRecovery}
+      >
+        {isRecovering ? 'Sending secure link…' : 'Forgot password?'}
+      </button>
+
       <p className="login-error" role="alert" aria-live="polite">
         {error}
+      </p>
+
+      <p className="login-notice" role="status" aria-live="polite">
+        {notice}
       </p>
 
       <button className="login-submit" type="submit" disabled={isSubmitting}>

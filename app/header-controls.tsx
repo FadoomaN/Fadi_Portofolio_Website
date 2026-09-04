@@ -24,7 +24,13 @@ function applyTheme(mode: ThemeMode) {
   document.documentElement.dataset.themeMode = mode;
 }
 
-export default function HeaderControls({ homeIsCurrent = false }: { homeIsCurrent?: boolean }) {
+export default function HeaderControls({
+  homeIsCurrent = false,
+  activeHref,
+}: {
+  homeIsCurrent?: boolean;
+  activeHref?: string;
+}) {
   const [mode, setMode] = useState<ThemeMode>('system');
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
   const [isSwitching, setIsSwitching] = useState(false);
@@ -113,11 +119,21 @@ export default function HeaderControls({ homeIsCurrent = false }: { homeIsCurren
           aria-hidden={!navigationOpen}
           data-open={navigationOpen}
         >
-          {navigationItems.map((item) => (
+          {navigationItems.map((item) => item.disabled ? (
+            <span
+              className="mobile-nav-link mobile-nav-link-disabled"
+              aria-disabled="true"
+              key={item.href}
+            >
+              <span className="nav-index">{item.index}</span>
+              <span>{item.label}</span>
+              <small>Soon</small>
+            </span>
+          ) : (
             <a
               className="mobile-nav-link"
               href={item.href}
-              aria-current={homeIsCurrent && item.current ? 'page' : undefined}
+              aria-current={(homeIsCurrent && item.current) || activeHref === item.href ? 'page' : undefined}
               tabIndex={navigationOpen ? 0 : -1}
               key={item.href}
               onClick={() => setOpenMenu(null)}
