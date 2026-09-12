@@ -48,6 +48,7 @@ function DesktopCircuit() {
       </g>
 
       <g className="life-cpu-open-terminals">
+        <circle cx="0" cy="150" r="4" />
         <circle cx="125" cy="28" r="4" />
         <circle cx="180" cy="45" r="4" />
         <circle cx="240" cy="18" r="4" />
