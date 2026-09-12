@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import SiteHeader from '../site-header';
 import ExperienceTimeline, { type ExperienceRecord } from './experience-timeline';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { additionalDemoExperiences } from './demo-expansion';
 
 export const metadata: Metadata = {
   title: 'Experiences — Fadi Al Hazim',
@@ -97,18 +98,10 @@ const demoExperiences: ExperienceRecord[] = [
     end_date: '2018-06-30',
     is_current: false,
   },
+  ...additionalDemoExperiences,
 ];
 
-const demoIds = [
-  '10000000-0000-4000-8000-000000000001',
-  '10000000-0000-4000-8000-000000000002',
-  '10000000-0000-4000-8000-000000000003',
-  '10000000-0000-4000-8000-000000000004',
-  '10000000-0000-4000-8000-000000000005',
-  '10000000-0000-4000-8000-000000000006',
-  '10000000-0000-4000-8000-000000000007',
-  '10000000-0000-4000-8000-000000000008',
-];
+const demoIds = demoExperiences.map((experience) => experience.id);
 
 export default async function ExperiencesPage() {
   const supabase = await createServerSupabaseClient();
@@ -118,8 +111,14 @@ export default async function ExperiencesPage() {
     .eq('status', 'published')
     .order('sort_order', { ascending: true })
     .order('start_date', { ascending: false });
-  // Demo records keep the public timeline useful until published database entries exist.
-  const experiences = error ? demoExperiences : (data ?? []);
+  const storedExperiences: ExperienceRecord[] = data ?? [];
+  // Expand only the existing demo timeline; never replace or pad real career records.
+  const isDemoTimeline = Boolean(error) || (storedExperiences.length > 0 &&
+    storedExperiences.every((experience) => demoIds.includes(experience.id)));
+  const storedIds = new Set(storedExperiences.map((experience) => experience.id));
+  const experiences = error ? demoExperiences : isDemoTimeline
+    ? [...storedExperiences, ...demoExperiences.filter((experience) => !storedIds.has(experience.id))]
+    : storedExperiences;
 
   return (
     <main className="experience-index-canvas">
@@ -130,7 +129,7 @@ export default async function ExperiencesPage() {
           <p>
             <span>04 / Career timeline</span>
             <i aria-hidden="true" />
-            <span>{String(experiences.length).padStart(2, '0')} records</span>
+            <span>{String(experiences.length).padStart(2, '0')} {isDemoTimeline ? 'test records' : 'records'}</span>
           </p>
           <h1 id="experiences-title">EXPERIENCES</h1>
         </header>

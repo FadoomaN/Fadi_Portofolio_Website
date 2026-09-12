@@ -121,6 +121,11 @@ export default function ExperienceTimeline({
 
   // Draw an orthogonal PCB trace from the selected CLK port to the output panel.
   const updateBoardTrace = useCallback(() => {
+    if (window.matchMedia('(max-width: 48rem)').matches) {
+      setBoardTrace(null);
+      return;
+    }
+
     const board = boardRef.current;
     const panel = detailRef.current;
     const activeBlock = board?.querySelector<HTMLElement>(`[data-experience-index="${activeIndex}"]`);
@@ -129,33 +134,20 @@ export default function ExperienceTimeline({
 
     const boardBox = board.getBoundingClientRect();
     const blockBox = activeBlock.getBoundingClientRect();
+    const clockBox = activeBlock.querySelector('.experience-clock-port svg')?.getBoundingClientRect();
     const panelBox = panel.getBoundingClientRect();
-    const isStacked = boardBox.width <= 768;
-
-    if (isStacked) {
-      const startX = blockBox.left + blockBox.width * 0.5 - boardBox.left;
-      const endX = panelBox.left + panelBox.width * 0.5 - boardBox.left;
-      const startY = blockBox.top - boardBox.top;
-      const endY = panelBox.bottom - boardBox.top;
-      const middleY = endY + (startY - endY) * 0.5;
-
-      setBoardTrace({
-        experienceId: activeExperience.id,
-        path: `M ${startX} ${startY} V ${middleY} H ${endX} V ${endY}`,
-      });
-      return;
-    }
-
-    const startX = blockBox.right - boardBox.left;
-    const startY = blockBox.top + blockBox.height * 0.5 - boardBox.top;
+    const startX = (clockBox?.right ?? blockBox.right) - boardBox.left;
+    const startY = clockBox
+      ? clockBox.top + clockBox.height * 0.5 - boardBox.top
+      : blockBox.top + blockBox.height * 0.5 - boardBox.top;
     const endX = panelBox.left - boardBox.left;
     const endY = panelBox.top + panelBox.height * 0.5 - boardBox.top;
     const middleX = startX + (endX - startX) * 0.5;
 
-    setBoardTrace({
-      experienceId: activeExperience.id,
-      path: `M ${startX} ${startY} H ${middleX} V ${endY} H ${endX}`,
-    });
+    const path = `M ${startX} ${startY} H ${middleX} V ${endY} H ${endX}`;
+    setBoardTrace((current) => current?.experienceId === activeExperience.id && current.path === path
+      ? current
+      : { experienceId: activeExperience.id, path });
   }, [activeExperience, activeIndex]);
 
   useLayoutEffect(() => {
@@ -165,14 +157,26 @@ export default function ExperienceTimeline({
     const panel = detailRef.current;
     if (!board || !panel) return;
 
-    const resizeObserver = new ResizeObserver(updateBoardTrace);
+    // The sticky output panel changes position during a long timeline scroll.
+    let frame = 0;
+    const scheduleTraceUpdate = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        updateBoardTrace();
+      });
+    };
+    const resizeObserver = new ResizeObserver(scheduleTraceUpdate);
     resizeObserver.observe(board);
     resizeObserver.observe(panel);
-    window.addEventListener('resize', updateBoardTrace);
+    window.addEventListener('resize', scheduleTraceUpdate);
+    window.addEventListener('scroll', scheduleTraceUpdate, { passive: true });
 
     return () => {
       resizeObserver.disconnect();
-      window.removeEventListener('resize', updateBoardTrace);
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener('resize', scheduleTraceUpdate);
+      window.removeEventListener('scroll', scheduleTraceUpdate);
     };
   }, [updateBoardTrace]);
 
@@ -250,6 +254,7 @@ export default function ExperienceTimeline({
                   aria-selected={isActive}
                   tabIndex={isActive ? 0 : -1}
                   data-experience-index={index}
+                  data-current={experience.is_current || undefined}
                   onClick={() => toggleExperience(index, experience.id)}
                   onMouseEnter={() => previewExperience(index)}
                   onFocus={() => setActiveIndex(index)}
@@ -267,17 +272,21 @@ export default function ExperienceTimeline({
                     {String(index + 1).padStart(2, '0')}
                   </span>
 
-                  <span className="experience-logic-symbol" aria-hidden="true">
-                    <svg viewBox="0 0 112 72" focusable="false">
-                      <path className="logic-input" d="M2 20h14M2 52h14" />
-                      <path className="logic-case" d="M16 4h76v64H16z" />
-                      <path className="logic-clock" d="M92 28L80 36l12 8" />
-                      <path className="logic-output" d="M92 36h18" />
-                      <text className="logic-type" x="27" y="28">{circuitType}</text>
-                      <text className="logic-q" x="70" y="28">Q</text>
-                      <text className="logic-clk" x="25" y="56">CLK</text>
+                  <span className="experience-chip-type" aria-hidden="true">{circuitType}</span>
+                  <span className="experience-chip-output" aria-hidden="true">Q</span>
+                  <span className="experience-clock-port" aria-hidden="true">
+                    <svg viewBox="0 0 32 32" focusable="false">
+                      <path d="M31 4 15 16 31 28M31 16H32" />
                     </svg>
+                    <span>CLK</span>
                   </span>
+
+                  {experience.is_current && (
+                    <>
+                      <span className="experience-current-aura" aria-hidden="true" />
+                      <span className="experience-current-badge"><i aria-hidden="true" /> Current</span>
+                    </>
+                  )}
 
                   <span className="experience-circuit-copy">
                     <span className="experience-tab-date">
