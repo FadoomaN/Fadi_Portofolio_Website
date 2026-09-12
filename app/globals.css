@@ -2288,18 +2288,19 @@ body {
 
 .home-hero {
   --circuit-top: clamp(28rem, 53svh, 34rem);
+  --hero-pad-x: clamp(1.25rem, 3vw, 3.5rem);
   position: relative;
   isolation: isolate;
   display: grid;
-  grid-template-columns: minmax(23rem, 1.25fr) minmax(15rem, 0.62fr) minmax(14rem, 0.55fr);
+  grid-template-columns: minmax(20rem, 0.72fr) minmax(38rem, 1.7fr);
   grid-template-rows: 1fr;
   min-height: 100svh;
-  width: 80vw;
+  width: 90vw;
   margin-inline: auto;
   align-items: start;
   justify-items: center;
-  column-gap: clamp(1.25rem, 3vw, 3.5rem);
-  padding: clamp(9rem, 16vh, 11rem) clamp(1.25rem, 4vw, 4rem) 2rem;
+  column-gap: clamp(1rem, 2vw, 2.5rem);
+  padding: clamp(9rem, 16vh, 11rem) var(--hero-pad-x) 2rem;
   border-right: 1px solid var(--panel-border);
   border-left: 1px solid var(--panel-border);
   overflow: hidden;
@@ -2408,16 +2409,27 @@ body {
   margin-top: clamp(1.4rem, 4vh, 2.4rem);
 }
 
-/* The life-map is an ambient part of the hero rather than a separate illustration. */
+/* Circuit and portrait share one grid, so their connection survives zoom and resizing. */
+.hero-visual {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-row: 1;
+  grid-column: 2;
+  grid-template-columns: minmax(0, 1fr) clamp(12rem, 16vw, 17rem);
+  width: 100%;
+  max-width: 65rem;
+  align-items: center;
+  justify-self: end;
+  margin-top: clamp(-4.4rem, -5vh, -2.7rem);
+}
+
 .hero-life-cpu {
-  position: absolute;
-  z-index: 1;
-  top: clamp(7.4rem, 13vh, 9.5rem);
-  left: 50%;
-  width: clamp(24rem, 28vw, 32rem);
+  position: relative;
+  grid-column: 1;
+  width: 100%;
   color: var(--conductor);
   pointer-events: none;
-  transform: translateX(-50%);
 }
 
 .hero-life-cpu::before {
@@ -2437,12 +2449,8 @@ body {
   overflow: visible;
 }
 
-.hero-life-cpu .life-cpu-amplifier {
-  position: absolute;
-  top: 16%;
-  left: 61%;
-  width: clamp(20rem, 31vw, 42rem);
-  overflow: visible;
+.hero-life-cpu .life-cpu-mobile {
+  display: none;
 }
 
 .life-cpu-amp-circuit {
@@ -2626,11 +2634,12 @@ body {
 .hero-portrait {
   position: relative;
   z-index: 2;
-  grid-column: 3;
-  width: clamp(12rem, 16vw, 17rem);
+  grid-column: 2;
+  width: 100%;
+  max-width: 17rem;
   aspect-ratio: 4 / 5;
   justify-self: end;
-  margin: -1.5rem clamp(0rem, 1.5vw, 1.5rem) 0 0;
+  margin: 0;
 }
 
 
@@ -4264,6 +4273,49 @@ html[data-home-intro='seen'] .life-cpu-amp-signal-out {
   }
 }
 
+@media (max-width: 70rem) {
+  .home-hero {
+    --circuit-top: auto;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    width: 92vw;
+    min-height: auto;
+    align-content: start;
+    row-gap: clamp(1.25rem, 3vw, 2rem);
+    padding-top: 7.5rem;
+    padding-bottom: 0;
+  }
+
+  .hero-zone {
+    height: calc(100% - 2.6rem);
+  }
+
+  .hero-copy {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  .hero-visual {
+    grid-row: 2;
+    grid-column: 1;
+    grid-template-columns: minmax(0, 1fr) clamp(11rem, 22vw, 14rem);
+    width: min(100%, 56rem);
+    justify-self: center;
+    margin-top: 0;
+  }
+
+  .circuit-divider {
+    position: relative;
+    grid-row: 3;
+    grid-column: 1;
+    top: auto;
+    left: auto;
+    width: calc(100% + (2 * var(--hero-pad-x)));
+    margin: 0 calc(-1 * var(--hero-pad-x));
+    transform: none;
+  }
+}
+
 @media (max-width: 56rem) {
   .auth-formula-b,
   .auth-formula-d {
@@ -4466,36 +4518,8 @@ html[data-home-intro='seen'] .life-cpu-amp-signal-out {
   }
 
   .home-hero {
-    --circuit-top: clamp(30rem, 70svh, 38rem);
-    grid-template-columns: minmax(0, 1fr) minmax(11rem, 0.62fr);
-    grid-template-rows: auto;
-    width: 92vw;
-    column-gap: 2rem;
-    padding-top: 8rem;
-  }
-
-  .hero-life-cpu {
-    position: absolute;
-    top: 8.5rem;
-    left: 56%;
-    width: clamp(16rem, 30vw, 22rem);
-    margin: 0;
-    transform: translateX(-50%);
-  }
-
-  .hero-life-cpu .life-cpu-amplifier {
-    width: clamp(13rem, 30vw, 17rem);
-  }
-
-  .hero-copy {
-    width: 100%;
-  }
-
-  .hero-portrait {
-    grid-column: 2;
-    width: clamp(11rem, 24vw, 14rem);
-    margin-top: -0.5rem;
-    margin-right: 0;
+    width: 94vw;
+    padding-top: 7rem;
   }
 }
 
@@ -4633,6 +4657,37 @@ html[data-home-intro='seen'] .life-cpu-amp-signal-out {
     bottom: auto;
     left: 50%;
     transform: translate(-50%, -50%);
+  }
+}
+
+@media (max-width: 42rem) {
+  .hero-visual {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    width: min(100%, 30rem);
+    justify-items: center;
+  }
+
+  .hero-life-cpu {
+    grid-row: 1;
+    grid-column: 1;
+    width: min(100%, 24rem);
+  }
+
+  .hero-life-cpu .life-cpu-desktop {
+    display: none;
+  }
+
+  .hero-life-cpu .life-cpu-mobile {
+    display: block;
+  }
+
+  .hero-portrait {
+    grid-row: 2;
+    grid-column: 1;
+    width: clamp(10.5rem, 43vw, 12rem);
+    justify-self: center;
+    margin-top: -0.3rem;
   }
 }
 
@@ -5218,7 +5273,7 @@ html[data-home-intro='seen'] .life-cpu-amp-signal-out {
   .home-hero {
     --circuit-top: auto;
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto auto;
+    grid-template-rows: auto auto auto;
     width: 96vw;
     min-height: auto;
     align-content: start;
@@ -5244,18 +5299,16 @@ html[data-home-intro='seen'] .life-cpu-amp-signal-out {
     position: relative;
     top: auto;
     left: auto;
+    grid-row: 1;
     grid-column: 1;
-    width: min(24rem, 90vw);
+    width: min(22rem, 90vw);
     justify-self: center;
     margin-top: -0.35rem;
     transform: none;
   }
 
-  .hero-life-cpu .life-cpu-amplifier {
-    display: none;
-  }
-
   .hero-portrait {
+    grid-row: 2;
     grid-column: 1;
     width: clamp(10.5rem, 43vw, 12rem);
     justify-self: center;
@@ -5265,6 +5318,7 @@ html[data-home-intro='seen'] .life-cpu-amp-signal-out {
   /* On phones the divider follows the portrait in normal flow; it is not a viewport footer. */
   .circuit-divider {
     position: relative;
+    grid-row: 3;
     grid-column: 1;
     top: auto;
     bottom: auto;

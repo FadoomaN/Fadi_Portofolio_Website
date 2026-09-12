@@ -41,20 +41,22 @@ export default async function Home() {
           </div>
         </div>
 
-        <LifeCpu />
+        <div className="hero-visual">
+          <LifeCpu />
 
-        <figure className="hero-portrait">
-          <span className="portrait-frame portrait-frame-top" aria-hidden="true" />
-          <div className="portrait-window">
-            {/* Vinext's current Next Image shim crashes during local hydration, so keep this native. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={siteContent.profile.portrait.src}
-              alt={`${profile.firstName} ${profile.lastName} wearing a gray suit`}
-            />
-          </div>
-          <span className="portrait-frame portrait-frame-bottom" aria-hidden="true" />
-        </figure>
+          <figure className="hero-portrait">
+            <span className="portrait-frame portrait-frame-top" aria-hidden="true" />
+            <div className="portrait-window">
+              {/* Vinext's current Next Image shim crashes during local hydration, so keep this native. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={siteContent.profile.portrait.src}
+                alt={`${profile.firstName} ${profile.lastName} wearing a gray suit`}
+              />
+            </div>
+            <span className="portrait-frame portrait-frame-bottom" aria-hidden="true" />
+          </figure>
+        </div>
 
         <div className="circuit-divider" aria-hidden="true">
           <span className="circuit-rail" />
