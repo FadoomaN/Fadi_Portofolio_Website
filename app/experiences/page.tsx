@@ -118,7 +118,7 @@ export default async function ExperiencesPage() {
     .eq('status', 'published')
     .order('sort_order', { ascending: true })
     .order('start_date', { ascending: false });
-  // The same three demo records render until the new database migration is active.
+  // Demo records keep the public timeline useful until published database entries exist.
   const experiences = error ? demoExperiences : (data ?? []);
 
   return (

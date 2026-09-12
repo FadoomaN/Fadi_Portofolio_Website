@@ -1,4 +1,5 @@
 import SiteHeader from './site-header';
+import LifeCpu from './life-cpu';
 import { siteContent } from './site-content';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
@@ -39,6 +40,8 @@ export default async function Home() {
             <p>{profile.role}</p>
           </div>
         </div>
+
+        <LifeCpu />
 
         <figure className="hero-portrait">
           <span className="portrait-frame portrait-frame-top" aria-hidden="true" />

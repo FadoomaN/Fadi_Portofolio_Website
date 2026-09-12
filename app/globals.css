@@ -2291,14 +2291,14 @@ body {
   position: relative;
   isolation: isolate;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(14rem, 0.72fr);
+  grid-template-columns: minmax(23rem, 1.25fr) minmax(15rem, 0.62fr) minmax(14rem, 0.55fr);
   grid-template-rows: 1fr;
   min-height: 100svh;
   width: 80vw;
   margin-inline: auto;
   align-items: start;
   justify-items: center;
-  column-gap: clamp(2rem, 5vw, 6rem);
+  column-gap: clamp(1.25rem, 3vw, 3.5rem);
   padding: clamp(9rem, 16vh, 11rem) clamp(1.25rem, 4vw, 4rem) 2rem;
   border-right: 1px solid var(--panel-border);
   border-left: 1px solid var(--panel-border);
@@ -2345,6 +2345,7 @@ body {
 .hero-copy {
   position: relative;
   z-index: 2;
+  grid-column: 1;
   width: 100%;
   max-width: none;
   text-align: left;
@@ -2407,14 +2408,231 @@ body {
   margin-top: clamp(1.4rem, 4vh, 2.4rem);
 }
 
+/* The life-map is an ambient part of the hero rather than a separate illustration. */
+.hero-life-cpu {
+  position: absolute;
+  z-index: 1;
+  top: clamp(7.4rem, 13vh, 9.5rem);
+  left: 50%;
+  width: clamp(24rem, 28vw, 32rem);
+  color: var(--conductor);
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.hero-life-cpu::before {
+  position: absolute;
+  inset: -24% -36%;
+  background: radial-gradient(ellipse, color-mix(in srgb, var(--current) 11%, transparent), transparent 65%);
+  content: '';
+  filter: blur(1.5rem);
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.hero-life-cpu svg {
+  position: relative;
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+.hero-life-cpu .life-cpu-amplifier {
+  position: absolute;
+  top: 16%;
+  left: 61%;
+  width: clamp(20rem, 31vw, 42rem);
+  overflow: visible;
+}
+
+.life-cpu-amp-circuit {
+  color: color-mix(in srgb, var(--conductor) 78%, transparent);
+}
+
+.life-cpu-amp-circuit path,
+.life-cpu-amp-circuit rect,
+.life-cpu-amp-circuit circle,
+.life-cpu-amp-signals path {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+  vector-effect: non-scaling-stroke;
+}
+
+.life-cpu-amp-circuit .life-cpu-amp-body {
+  fill: color-mix(in srgb, var(--current) 4%, transparent);
+  stroke: color-mix(in srgb, var(--ink) 74%, var(--current));
+  stroke-width: 2.1;
+}
+
+.life-cpu-amp-circuit circle {
+  fill: var(--hero-surface);
+  stroke-width: 1.9;
+}
+
+.life-cpu-amp-circuit .life-cpu-amp-output {
+  fill: var(--hero-surface);
+  stroke: var(--current);
+  filter: drop-shadow(0 0 0.4rem color-mix(in srgb, var(--current) 65%, transparent));
+}
+
+.life-cpu-amp-circuit text {
+  fill: var(--ink);
+  font: 900 0.95rem/1 Arial, Helvetica, sans-serif;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.life-cpu-amp-signals {
+  color: var(--current);
+}
+
+.life-cpu-amp-signal {
+  stroke-width: 3.3 !important;
+  stroke-dasharray: 0.16 0.84;
+  stroke-dashoffset: 1;
+  opacity: 0;
+  filter: drop-shadow(0 0 0.4rem color-mix(in srgb, var(--current) 78%, transparent));
+  animation: life-cpu-current 620ms cubic-bezier(0.3, 0, 0.2, 1) 1 forwards;
+}
+
+.life-cpu-amp-signal-in {
+  animation-delay: 2.78s;
+}
+
+.life-cpu-amp-signal-out {
+  animation-delay: 3.04s;
+}
+
+.life-cpu-traces path,
+.life-cpu-signals path,
+.life-cpu-chip path,
+.life-cpu-chip rect,
+.life-cpu-node circle,
+.life-cpu-ambient path,
+.life-cpu-open-terminals circle {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.life-cpu-ambient {
+  color: color-mix(in srgb, var(--conductor) 72%, transparent);
+}
+
+.life-cpu-ambient path {
+  stroke-width: 1.65;
+}
+
+.life-cpu-open-terminals {
+  color: color-mix(in srgb, var(--conductor) 78%, transparent);
+}
+
+.life-cpu-open-terminals circle {
+  fill: var(--hero-surface);
+  stroke-width: 1.8;
+}
+
+.life-cpu-traces {
+  color: var(--conductor);
+}
+
+.life-cpu-traces path {
+  stroke-width: 1.8;
+}
+
+.life-cpu-signals {
+  color: var(--current);
+}
+
+.life-cpu-signal {
+  stroke-width: 3.4;
+  stroke-dasharray: 0.18 0.82;
+  stroke-dashoffset: 1;
+  opacity: 0;
+  filter: drop-shadow(0 0 0.35rem color-mix(in srgb, var(--current) 75%, transparent));
+  animation: life-cpu-current 620ms cubic-bezier(0.3, 0, 0.2, 1) 1 forwards;
+}
+
+.life-cpu-signal-a {
+  animation-delay: 2.25s;
+}
+
+.life-cpu-signal-b {
+  animation-delay: 2.35s;
+}
+
+.life-cpu-signal-c {
+  animation-delay: 2.45s;
+}
+
+.life-cpu-signal-d {
+  animation-delay: 2.55s;
+}
+
+.life-cpu-signal-e {
+  animation-delay: 2.65s;
+}
+
+.life-cpu-chip {
+  color: var(--ink);
+}
+
+.life-cpu-chip path,
+.life-cpu-chip rect {
+  stroke-width: 2.35;
+}
+
+.life-cpu-chip-shell {
+  fill: color-mix(in srgb, var(--hero-surface-alt) 62%, transparent) !important;
+  stroke: color-mix(in srgb, var(--ink) 82%, var(--current)) !important;
+}
+
+.life-cpu-chip-core {
+  fill: color-mix(in srgb, var(--current) 11%, var(--hero-surface-alt)) !important;
+  stroke: var(--current) !important;
+}
+
+.life-cpu-chip text {
+  fill: var(--ink);
+  font: 900 1rem/1 'Arial Black', Arial, Helvetica, sans-serif;
+  letter-spacing: 0.08em;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.life-cpu-node {
+  color: var(--conductor);
+}
+
+.life-cpu-node circle {
+  fill: color-mix(in srgb, var(--hero-surface-alt) 68%, transparent);
+  stroke-width: 1.9;
+}
+
+.life-cpu-node path {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
 .hero-portrait {
   position: relative;
   z-index: 2;
+  grid-column: 3;
   width: clamp(12rem, 16vw, 17rem);
   aspect-ratio: 4 / 5;
   justify-self: end;
   margin: -1.5rem clamp(0rem, 1.5vw, 1.5rem) 0 0;
 }
+
 
 .hero-copy h1 span {
   white-space: nowrap;
@@ -2747,6 +2965,53 @@ body {
   animation: intro-exit var(--intro-duration) linear forwards;
 }
 
+/* The entrance belongs to the visit, not to every click on Home. */
+html[data-home-intro='seen'] .intro {
+  display: none;
+}
+
+html[data-home-intro='seen'] .engineering-header::after,
+html[data-home-intro='seen'] .engineering-header .header-brand,
+html[data-home-intro='seen'] .engineering-header .header-nav,
+html[data-home-intro='seen'] .engineering-header .header-controls,
+html[data-home-intro='seen'] .home-hero,
+html[data-home-intro='seen'] .hero-kicker-line,
+html[data-home-intro='seen'] .circuit-divider {
+  animation-delay: 0s;
+}
+
+html[data-home-intro='seen'] .hero-portrait::after {
+  animation-delay: 0.25s;
+}
+
+html[data-home-intro='seen'] .life-cpu-signal-a {
+  animation-delay: 0.35s;
+}
+
+html[data-home-intro='seen'] .life-cpu-signal-b {
+  animation-delay: 0.45s;
+}
+
+html[data-home-intro='seen'] .life-cpu-signal-c {
+  animation-delay: 0.55s;
+}
+
+html[data-home-intro='seen'] .life-cpu-signal-d {
+  animation-delay: 0.65s;
+}
+
+html[data-home-intro='seen'] .life-cpu-signal-e {
+  animation-delay: 0.75s;
+}
+
+html[data-home-intro='seen'] .life-cpu-amp-signal-in {
+  animation-delay: 0.88s;
+}
+
+html[data-home-intro='seen'] .life-cpu-amp-signal-out {
+  animation-delay: 1.12s;
+}
+
 .intro-scene {
   position: relative;
   width: min(88vw, 45rem);
@@ -2862,10 +3127,10 @@ body {
 
 .experience-index-heading {
   display: grid;
-  min-height: clamp(12rem, 24svh, 17rem);
+  min-height: clamp(7.75rem, 13svh, 9.5rem);
   align-content: end;
   border-bottom: 1px solid var(--panel-border);
-  padding: clamp(2rem, 4vw, 4rem);
+  padding: clamp(1.35rem, 2.6vw, 2.5rem);
   overflow: hidden;
   background:
     linear-gradient(color-mix(in srgb, var(--panel-border) 22%, transparent) 1px, transparent 1px),
@@ -2880,10 +3145,10 @@ body {
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 0.8rem;
-  margin: 0 0 1.6rem;
+  margin: 0 0 1rem;
   color: var(--muted-ink);
-  font: 900 0.7rem/1 'Arial Black', Arial, Helvetica, sans-serif;
-  letter-spacing: 0.12em;
+  font: 900 0.8rem/1.2 'Arial Black', Arial, Helvetica, sans-serif;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
 }
 
@@ -2895,14 +3160,13 @@ body {
 .experience-index-heading h1 {
   margin: 0;
   white-space: nowrap;
-  font: 900 clamp(2.8rem, 4.6vw, 5.4rem)/0.86 'Arial Black', Arial, Helvetica, sans-serif;
-  letter-spacing: -0.065em;
+  font: 900 clamp(1.9rem, 2.8vw, 3.1rem)/0.9 'Arial Black', Arial, Helvetica, sans-serif;
+  letter-spacing: -0.055em;
 }
 
 .experience-timeline {
-  min-height: clamp(28rem, 58svh, 43rem);
-  padding: clamp(2rem, 4vw, 4rem);
-  overflow: hidden;
+  min-height: clamp(24rem, 48svh, 34rem);
+  padding: clamp(1.5rem, 3vw, 2.75rem);
   background: var(--menu-surface);
 }
 
@@ -2929,14 +3193,14 @@ body {
 }
 
 .experience-timeline-toolbar strong {
-  font-size: 0.72rem;
+  font-size: 0.88rem;
   letter-spacing: 0.07em;
 }
 
 .experience-timeline-toolbar span {
   color: var(--muted-ink);
-  font-size: 0.62rem;
-  letter-spacing: 0.06em;
+  font-size: 0.84rem;
+  letter-spacing: 0.04em;
 }
 
 .experience-timeline-controls {
@@ -2948,7 +3212,7 @@ body {
 .experience-timeline-controls output {
   margin-right: 0.9rem;
   color: var(--muted-ink);
-  font-size: 0.72rem;
+  font-size: 0.84rem;
   letter-spacing: 0.08em;
 }
 
@@ -2980,64 +3244,148 @@ body {
   opacity: 0.3;
 }
 
-.experience-timeline-scroll {
-  overflow-x: auto;
-  overscroll-behavior-inline: contain;
-  scrollbar-color: var(--panel-border) transparent;
-  scrollbar-width: thin;
-  scroll-snap-type: x proximity;
+.experience-logic-board {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(20rem, 0.72fr);
+  align-items: start;
+  gap: clamp(4rem, 7vw, 7.5rem);
+  padding: clamp(1.25rem, 2.2vw, 2.25rem) 0 clamp(2rem, 4vw, 4rem);
+  background:
+    radial-gradient(circle at 72% 22%, color-mix(in srgb, var(--current) 7%, transparent), transparent 22rem),
+    linear-gradient(color-mix(in srgb, var(--panel-border) 16%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--panel-border) 16%, transparent) 1px, transparent 1px);
+  background-size: auto, 2.4rem 2.4rem, 2.4rem 2.4rem;
 }
 
-.experience-timeline-tabs {
+.experience-component-grid {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15.5rem), 1fr));
+  gap: 0.9rem;
+}
+
+.experience-component-record {
+  display: contents;
+}
+
+.experience-mobile-toggle,
+.experience-component-record .experience-mobile-details {
+  display: none;
+}
+
+.experience-component-grid button {
   position: relative;
   display: grid;
-  min-width: 42rem;
+  min-width: 0;
+  min-height: 8rem;
+  grid-template-columns: 5.75rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid var(--panel-border);
+  padding: 0.85rem 0.9rem 0.85rem 0.65rem;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, transparent 0.72rem, var(--hero-surface-alt) 0.74rem) top left,
+    var(--hero-surface-alt);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
 }
 
-.experience-timeline-tabs::before {
+.experience-component-grid button::before,
+.experience-component-grid button::after {
   position: absolute;
-  z-index: 0;
-  top: 3.2rem;
-  right: 0;
   left: 0;
+  width: 0.42rem;
   height: 1px;
   background: var(--conductor);
   content: '';
 }
 
-.experience-timeline-tabs button {
-  position: relative;
-  z-index: 1;
+.experience-component-grid button::before {
+  top: 35%;
+}
+
+.experience-component-grid button::after {
+  top: 66%;
+}
+
+.experience-component-grid button:hover,
+.experience-component-grid button:focus-visible,
+.experience-component-grid button.is-active {
+  border-color: color-mix(in srgb, var(--current) 75%, var(--panel-border));
+  background: color-mix(in srgb, var(--current) 7%, var(--hero-surface-alt));
+  outline: 0;
+}
+
+.experience-component-grid button:hover,
+.experience-component-grid button:focus-visible {
+  transform: translateY(-0.16rem);
+}
+
+.experience-component-grid button.is-active {
+  box-shadow: inset 3px 0 0 var(--current), 0 0 1.2rem color-mix(in srgb, var(--current) 9%, transparent);
+}
+
+.experience-block-number {
+  position: absolute;
+  top: 0.55rem;
+  left: 0.65rem;
+  color: color-mix(in srgb, var(--muted-ink) 72%, transparent);
+  font: 900 0.76rem/1 'Arial Black', Arial, Helvetica, sans-serif;
+  letter-spacing: 0.08em;
+}
+
+.experience-logic-symbol {
+  display: block;
+  color: var(--conductor);
+}
+
+.experience-logic-symbol svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+.experience-logic-symbol path {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.experience-logic-symbol text {
+  fill: currentColor;
+  font-family: 'Arial Black', Arial, Helvetica, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.experience-logic-symbol .logic-clk {
+  font-size: 0.52rem;
+  letter-spacing: 0.08em;
+}
+
+.experience-component-grid button.is-active .experience-logic-symbol {
+  color: var(--current);
+  filter: drop-shadow(0 0 0.3rem color-mix(in srgb, var(--current) 65%, transparent));
+}
+
+.experience-circuit-copy {
   display: grid;
   min-width: 0;
-  min-height: 10rem;
-  grid-template-rows: 1.7rem 2.7rem auto auto;
-  justify-items: start;
-  border: 0;
-  border-left: 1px solid var(--panel-border);
-  padding: 0 clamp(0.8rem, 1.8vw, 1.5rem) 1rem;
-  background: transparent;
-  color: var(--ink);
-  text-align: left;
-  cursor: pointer;
-  transition: background-color 180ms ease, color 180ms ease;
-  scroll-snap-align: start;
-}
-
-.experience-timeline-tabs button:last-child {
-  border-right: 1px solid var(--panel-border);
-}
-
-.experience-timeline-tabs button:hover,
-.experience-timeline-tabs button:focus-visible,
-.experience-timeline-tabs button.is-active {
-  background: color-mix(in srgb, var(--current) 7%, transparent);
-  outline: 0;
+  gap: 0.42rem;
 }
 
 .experience-tab-date {
   color: var(--muted-ink);
-  font: 900 0.62rem/1 'Arial Black', Arial, Helvetica, sans-serif;
+  font: 900 0.8rem/1.15 'Arial Black', Arial, Helvetica, sans-serif;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -3047,56 +3395,108 @@ body {
   font-style: normal;
 }
 
-.experience-tab-node {
-  position: relative;
-  width: 0.72rem;
-  height: 0.72rem;
-  align-self: center;
-  margin-left: 0.08rem;
-  border: 1px solid var(--conductor);
-  border-radius: 50%;
-  background: var(--menu-surface);
-  transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
-}
-
-.experience-timeline-tabs button.is-active .experience-tab-node {
-  border-color: var(--current);
-  background: var(--current);
-  box-shadow: 0 0 0.8rem color-mix(in srgb, var(--current) 75%, transparent);
-  transform: scale(1.18);
-}
-
-.experience-timeline-tabs strong {
-  align-self: end;
-  font: 900 clamp(0.98rem, 1.3vw, 1.3rem)/1.1 'Arial Black', Arial, Helvetica, sans-serif;
+.experience-circuit-copy strong {
+  font: 900 clamp(0.98rem, 1.05vw, 1.18rem)/1.16 'Arial Black', Arial, Helvetica, sans-serif;
   letter-spacing: -0.025em;
   text-transform: uppercase;
 }
 
-.experience-timeline-tabs small {
-  margin-top: 0.48rem;
+.experience-circuit-copy small {
   color: var(--muted-ink);
-  font-size: 0.68rem;
+  font-size: 0.86rem;
   font-weight: 800;
   letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
-.experience-popout-anchor {
-  position: relative;
-  width: min(52rem, 100%);
-  margin-top: 2.2rem;
-  margin-inline: auto;
+.experience-board-trace {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
 }
 
-.experience-popout {
+.experience-board-trace path {
+  fill: none;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  vector-effect: non-scaling-stroke;
+}
+
+.experience-board-trace-base {
+  opacity: 0.75;
+  stroke: var(--conductor);
+  stroke-width: 1;
+}
+
+.experience-board-trace-current {
+  stroke: var(--current);
+  stroke-dasharray: 0.16 0.84;
+  stroke-dashoffset: 1;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 0.42rem color-mix(in srgb, var(--current) 92%, transparent));
+  animation: experience-board-current 620ms cubic-bezier(0.3, 0, 0.2, 1) both;
+}
+
+.experience-popout-anchor {
+  position: sticky;
+  z-index: 3;
+  top: 6.8rem;
+  width: 100%;
+  align-self: start;
+}
+
+.experience-popout,
+.experience-mobile-details {
   position: relative;
-  min-height: 13rem;
+  display: flex;
+  min-height: 21rem;
+  flex-direction: column;
+  justify-content: center;
   border: 1px solid var(--panel-border);
-  padding: clamp(1.25rem, 2.5vw, 2.25rem);
+  padding: clamp(1rem, 2vw, 1.6rem);
   background: var(--hero-surface-alt);
   box-shadow: 0 1.2rem 3rem rgb(0 0 0 / 8%);
   animation: experience-popout-in 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.experience-output-label {
+  display: flex;
+  align-self: flex-end;
+  align-items: baseline;
+  gap: 0.45rem;
+  margin-bottom: 0.75rem;
+  color: var(--muted-ink);
+  font-family: 'Arial Black', Arial, Helvetica, sans-serif;
+  text-transform: uppercase;
+}
+
+.experience-output-label span {
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+}
+
+.experience-output-label strong {
+  color: var(--current);
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.experience-popout::after {
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  width: 0.48rem;
+  height: 0.48rem;
+  border: 1px solid var(--current);
+  border-radius: 50%;
+  background: var(--hero-surface-alt);
+  box-shadow: 0 0 0.7rem color-mix(in srgb, var(--current) 72%, transparent);
+  content: '';
+  transform: translate(50%, -50%);
 }
 
 .experience-popout::before {
@@ -3120,8 +3520,8 @@ body {
   border-left: 1px solid var(--panel-border);
   padding-left: 0.45rem;
   color: var(--muted-ink);
-  font: 900 0.58rem/1 'Arial Black', Arial, Helvetica, sans-serif;
-  letter-spacing: 0.09em;
+  font: 900 0.8rem/1.2 'Arial Black', Arial, Helvetica, sans-serif;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
@@ -3139,34 +3539,38 @@ body {
   box-shadow: 0 0 0.45rem currentColor;
 }
 
-.experience-popout h2 {
+.experience-popout h2,
+.experience-mobile-details h2 {
   margin: 0;
-  font: 900 clamp(1.25rem, 1.7vw, 1.9rem)/1 'Arial Black', Arial, Helvetica, sans-serif;
+  font: 900 clamp(1.2rem, 1.55vw, 1.7rem)/1.05 'Arial Black', Arial, Helvetica, sans-serif;
   letter-spacing: -0.04em;
   text-transform: uppercase;
 }
 
-.experience-popout > p {
+.experience-popout > p,
+.experience-mobile-details > p {
   max-width: 38rem;
-  margin: 1rem 0 1.6rem;
-  font-size: clamp(0.92rem, 1.05vw, 1.05rem);
+  margin: 0.75rem 0 1rem;
+  font-size: clamp(1rem, 1.1vw, 1.12rem);
   font-weight: 700;
   line-height: 1.6;
 }
 
-.experience-popout footer {
+.experience-popout footer,
+.experience-mobile-details footer {
   display: flex;
   flex-wrap: wrap;
   gap: 0.55rem 1.1rem;
   padding-top: 0.8rem;
   border-top: 1px solid var(--panel-border);
   color: var(--muted-ink);
-  font: 900 0.6rem/1 'Arial Black', Arial, Helvetica, sans-serif;
-  letter-spacing: 0.07em;
+  font: 900 0.8rem/1.4 'Arial Black', Arial, Helvetica, sans-serif;
+  letter-spacing: 0.055em;
   text-transform: uppercase;
 }
 
-.experience-popout footer span:first-child {
+.experience-popout footer span:first-child,
+.experience-mobile-details footer span:first-child {
   color: var(--current);
 }
 
@@ -3195,6 +3599,36 @@ body {
     clip-path: inset(0 0 100% 0);
     transform: translateY(-0.35rem);
   }
+  to {
+    opacity: 1;
+    clip-path: inset(0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes experience-board-current {
+  from {
+    opacity: 0.25;
+    stroke-dashoffset: 1;
+  }
+
+  18% {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes experience-mobile-detail-in {
+  from {
+    opacity: 0;
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(-0.35rem);
+  }
+
   to {
     opacity: 1;
     clip-path: inset(0);
@@ -3695,6 +4129,21 @@ body {
   }
 }
 
+@keyframes life-cpu-current {
+  0% {
+    stroke-dashoffset:  1;
+    opacity: 0;
+  }
+  12%,
+  76% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
 @keyframes name-drift {
   from {
     transform: translate3d(0, 0.18rem, 0);
@@ -3955,28 +4404,30 @@ body {
   }
 
   .experience-index-heading {
-    min-height: 14rem;
-    padding: 2rem;
+    min-height: 8.75rem;
+    padding: 1.6rem 2rem;
   }
 
   .experience-index-heading h1 {
-    font-size: clamp(2.6rem, 6vw, 4.4rem);
+    font-size: clamp(2rem, 4.5vw, 2.8rem);
   }
 
   .experience-timeline {
     padding: 2rem;
   }
 
+  .experience-logic-board {
+    grid-template-columns: minmax(0, 1.25fr) minmax(17rem, 0.75fr);
+    gap: 3rem;
+  }
+
+  .experience-component-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  }
+
   .experience-popout-anchor {
-    width: 75%;
-  }
-
-  .experience-popout-anchor[data-alignment='center'] {
-    margin-left: 12.5%;
-  }
-
-  .experience-popout-anchor[data-alignment='end'] {
-    margin-left: 25%;
+    width: 100%;
+    margin: 0;
   }
 
   .experiences-hero,
@@ -4023,11 +4474,25 @@ body {
     padding-top: 8rem;
   }
 
+  .hero-life-cpu {
+    position: absolute;
+    top: 8.5rem;
+    left: 56%;
+    width: clamp(16rem, 30vw, 22rem);
+    margin: 0;
+    transform: translateX(-50%);
+  }
+
+  .hero-life-cpu .life-cpu-amplifier {
+    width: clamp(13rem, 30vw, 17rem);
+  }
+
   .hero-copy {
     width: 100%;
   }
 
   .hero-portrait {
+    grid-column: 2;
     width: clamp(11rem, 24vw, 14rem);
     margin-top: -0.5rem;
     margin-right: 0;
@@ -4086,6 +4551,88 @@ body {
     left: auto;
     width: 10.5rem;
     transform: none;
+  }
+
+  .experience-logic-board {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .experience-board-trace {
+    display: none;
+  }
+
+  .experience-component-grid {
+    grid-row: 1;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .experience-component-record {
+    display: grid;
+  }
+
+  .experience-component-grid button {
+    padding-bottom: 2.15rem;
+  }
+
+  .experience-mobile-toggle {
+    position: absolute;
+    right: 0.75rem;
+    bottom: 0.62rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--muted-ink);
+    font: 900 0.75rem/1 'Arial Black', Arial, Helvetica, sans-serif;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .experience-mobile-toggle i {
+    color: var(--current);
+    font-size: 1rem;
+    font-style: normal;
+    transition: transform 180ms ease;
+  }
+
+  .experience-component-record .experience-mobile-details {
+    display: flex;
+    min-height: 0;
+    justify-content: flex-start;
+    border-color: color-mix(in srgb, var(--current) 58%, var(--panel-border));
+    border-top: 0;
+    padding: 1.15rem;
+    background: color-mix(in srgb, var(--current) 5%, var(--hero-surface-alt));
+    box-shadow: none;
+    animation: experience-mobile-detail-in 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .experience-component-record button[aria-expanded='true'] {
+    border-color: color-mix(in srgb, var(--current) 58%, var(--panel-border));
+    border-bottom-color: transparent;
+  }
+
+  .experience-mobile-details .experience-output-label {
+    margin-bottom: 0.6rem;
+  }
+
+  .experience-popout-anchor,
+  .experience-popout-anchor[data-alignment='center'],
+  .experience-popout-anchor[data-alignment='end'] {
+    position: relative;
+    top: auto;
+    grid-row: 1;
+    display: none;
+    width: 100%;
+    margin: 0;
+  }
+
+  .experience-popout::after {
+    top: 100%;
+    right: auto;
+    bottom: auto;
+    left: 50%;
+    transform: translate(-50%, -50%);
   }
 }
 
@@ -4430,22 +4977,22 @@ body {
   }
 
   .experience-index-heading {
-    min-height: 13rem;
-    padding: 1.4rem 1.1rem;
+    min-height: 8.5rem;
+    padding: 1.25rem 1.1rem;
     background-size: 2rem 2rem;
   }
 
   .experience-index-heading p {
-    margin-bottom: 1.25rem;
-    font-size: 0.62rem;
+    margin-bottom: 0.85rem;
+    font-size: 0.76rem;
   }
 
   .experience-index-heading h1 {
-    font-size: clamp(2.1rem, 9.8vw, 3.35rem);
+    font-size: clamp(1.75rem, 8vw, 2.45rem);
   }
 
   .experience-timeline {
-    min-height: 35rem;
+    min-height: 25rem;
     padding: 1.4rem 1rem;
   }
 
@@ -4466,25 +5013,36 @@ body {
     height: 2.45rem;
   }
 
-  .experience-timeline-tabs {
-    min-width: 34rem;
+  .experience-logic-board {
+    gap: 2.25rem;
+    background-size: auto, 1.8rem 1.8rem, 1.8rem 1.8rem;
   }
 
-  .experience-timeline-tabs::before {
-    top: 3rem;
+  .experience-component-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .experience-timeline-tabs button {
-    min-height: 8.8rem;
-    grid-template-rows: 1.6rem 2.5rem auto auto;
-    padding-inline: 0.8rem;
+  .experience-component-grid button {
+    min-height: 7.6rem;
+    grid-template-columns: 5.25rem minmax(0, 1fr);
+    gap: 0.65rem;
+    padding: 0.75rem 0.65rem 0.75rem 0.45rem;
+  }
+
+  .experience-circuit-copy strong {
+    font-size: 1rem;
+  }
+
+  .experience-circuit-copy small,
+  .experience-tab-date {
+    font-size: 0.78rem;
   }
 
   .experience-popout-anchor,
   .experience-popout-anchor[data-alignment='center'],
   .experience-popout-anchor[data-alignment='end'] {
     width: 100%;
-    margin-top: 1.5rem;
+    margin-top: 0;
     margin-left: 0;
   }
 
@@ -4493,8 +5051,16 @@ body {
   }
 
   .experience-popout {
-    min-height: 14rem;
+    min-height: 15rem;
     padding: 1.2rem;
+  }
+
+  .experience-popout::after {
+    top: 100%;
+    right: auto;
+    bottom: auto;
+    left: 50%;
+    transform: translate(-50%, -50%);
   }
 
   .experience-popout h2 {
@@ -4652,7 +5218,7 @@ body {
   .home-hero {
     --circuit-top: auto;
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto;
+    grid-template-rows: auto auto auto auto;
     width: 96vw;
     min-height: auto;
     align-content: start;
@@ -4674,7 +5240,23 @@ body {
     width: 100%;
   }
 
+  .hero-life-cpu {
+    position: relative;
+    top: auto;
+    left: auto;
+    grid-column: 1;
+    width: min(24rem, 90vw);
+    justify-self: center;
+    margin-top: -0.35rem;
+    transform: none;
+  }
+
+  .hero-life-cpu .life-cpu-amplifier {
+    display: none;
+  }
+
   .hero-portrait {
+    grid-column: 1;
     width: clamp(10.5rem, 43vw, 12rem);
     justify-self: center;
     margin: 0.1rem 0 0;
@@ -4759,12 +5341,20 @@ body {
   .home-hero,
   .hero-kicker-line,
   .hero-copy h1,
+  .life-cpu-signal,
+  .life-cpu-amp-signal,
   .hero-portrait img,
   .hero-portrait::after,
   .circuit-divider,
   .circuit-rail::after,
   .circuit-trace::after,
   .circuit-node::after {
+    animation: none;
+  }
+
+  .experience-board-trace-current,
+  .experience-popout,
+  .experience-mobile-details {
     animation: none;
   }
 
@@ -4775,6 +5365,14 @@ body {
 
   .hero-kicker-line {
     transform: scaleX(1);
+  }
+
+  .life-cpu-signal {
+    opacity: 0;
+  }
+
+  .life-cpu-amp-signal {
+    opacity: 0;
   }
 
   .circuit-divider {
