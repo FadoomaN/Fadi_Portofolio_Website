@@ -28,7 +28,7 @@ export default async function AdminPage() {
     redirect('/authenticator');
   }
 
-  const [experienceResult, projectResult, videoResult, profileResult, privateContactResult] = await Promise.all([
+  const [experienceResult, projectResult, videoResult, profileResult, privateContactResult, aboutResult, contactResult, journeyResult, journeyUpdateResult, projectUpdateResult] = await Promise.all([
     supabase
       .from('experiences')
       .select('id, organization, role, employment_type, location, summary, start_date, end_date, is_current, status, sort_order, updated_at', { count: 'exact' })
@@ -36,7 +36,7 @@ export default async function AdminPage() {
       .order('start_date', { ascending: false }),
     supabase
       .from('projects')
-      .select('id, title, status, updated_at', { count: 'exact' })
+      .select('id, title, slug, summary, technical_description, cover_image_url, github_url, live_url, tags, status, featured, sort_order, updated_at', { count: 'exact' })
       .order('updated_at', { ascending: false })
       .limit(6),
     supabase
@@ -49,6 +49,11 @@ export default async function AdminPage() {
       .select('first_name, last_name, role, kicker, updated_at')
       .eq('id', 1)
       .maybeSingle(),
+    supabase.from('about_content').select('id, title, intro, body, sections, media_reference, updated_at').eq('id', 1).maybeSingle(),
+    supabase.from('public_contact_settings').select('id, email, github_url, linkedin_url, cv_url, updated_at').eq('id', 1).maybeSingle(),
+    supabase.from('journey_threads').select('id, title, slug, description, cover_media_reference, status, featured, sort_order, updated_at', { count: 'exact' }).order('sort_order'),
+    supabase.from('journey_updates').select('id, thread_id, title, published_on, content, media_reference, status, sort_order, updated_at', { count: 'exact' }).order('sort_order'),
+    supabase.from('project_updates').select('id, project_id, title, published_on, content, media_reference, status, sort_order, updated_at', { count: 'exact' }).order('sort_order'),
     supabase
       .from('admin_contact_settings')
       .select('operations_email, phone_number, timezone, updated_at')
@@ -67,6 +72,12 @@ export default async function AdminPage() {
           experienceCount={experienceResult.count ?? 0}
           projectCount={projectResult.count ?? 0}
           videoCount={videoResult.count ?? 0}
+          journeyThreads={journeyResult.data ?? []}
+          journeyUpdates={journeyUpdateResult.data ?? []}
+          journeyCount={journeyResult.count ?? 0}
+          projectUpdates={projectUpdateResult.data ?? []}
+          about={aboutResult.data}
+          publicContact={contactResult.data}
           profile={profileResult.data}
           privateContact={privateContactResult.data}
         />

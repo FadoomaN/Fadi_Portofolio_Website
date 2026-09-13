@@ -35,13 +35,11 @@ const circuitTypes = ['D', 'JK', 'T', 'SR'] as const;
 
 function ExperienceDetails({
   experience,
-  isDemo,
   id,
   labelledBy,
   className = 'experience-popout',
 }: {
   experience: ExperienceRecord;
-  isDemo: boolean;
   id: string;
   labelledBy: string;
   className?: string;
@@ -54,7 +52,6 @@ function ExperienceDetails({
       </div>
       <div className="experience-popout-topline">
         <span>{formatType(experience.employment_type)}</span>
-        {isDemo && <span>Test record</span>}
         {experience.is_current && <span className="is-current"><i /> Current</span>}
       </div>
       <h2>{experience.role}</h2>
@@ -76,10 +73,8 @@ function ExperienceDetails({
 
 export default function ExperienceTimeline({
   experiences,
-  demoIds,
 }: {
   experiences: ExperienceRecord[];
-  demoIds: string[];
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -309,7 +304,6 @@ export default function ExperienceTimeline({
                     className="experience-mobile-details"
                     experience={experience}
                     id={`experience-mobile-detail-${experience.id}`}
-                    isDemo={demoIds.includes(experience.id)}
                     labelledBy={`experience-tab-${experience.id}`}
                   />
                 )}
@@ -322,7 +316,6 @@ export default function ExperienceTimeline({
           <ExperienceDetails
             experience={activeExperience}
             id="experience-detail-panel"
-            isDemo={demoIds.includes(activeExperience.id)}
             key={activeExperience.id}
             labelledBy={`experience-tab-${activeExperience.id}`}
           />

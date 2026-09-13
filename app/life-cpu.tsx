@@ -57,19 +57,19 @@ function DesktopCircuit() {
       </g>
 
       <g className="life-cpu-traces">
-        <path d="M130 120H102V55H72" />
-        <path d="M230 120H252V52H258" />
-        <path d="M230 150H271" />
-        <path d="M210 205V255H268" />
-        <path d="M150 205V255H77" />
+        <path d="M116 125H102V55H72" />
+        <path d="M244 125H252V52H258" />
+        <path d="M244 145V150H271" />
+        <path d="M210 219V255H268" />
+        <path d="M150 219V255H77" />
       </g>
 
       <g className="life-cpu-signals">
-        <path className="life-cpu-signal life-cpu-signal-a" pathLength="1" d="M130 120H102V55H72" />
-        <path className="life-cpu-signal life-cpu-signal-b" pathLength="1" d="M230 120H252V52H258" />
-        <path className="life-cpu-signal life-cpu-signal-c" pathLength="1" d="M230 150H271" />
-        <path className="life-cpu-signal life-cpu-signal-d" pathLength="1" d="M210 205V255H268" />
-        <path className="life-cpu-signal life-cpu-signal-e" pathLength="1" d="M150 205V255H77" />
+        <path className="life-cpu-signal life-cpu-signal-a" pathLength="1" d="M116 125H102V55H72" />
+        <path className="life-cpu-signal life-cpu-signal-b" pathLength="1" d="M244 125H252V52H258" />
+        <path className="life-cpu-signal life-cpu-signal-c" pathLength="1" d="M244 145V150H271" />
+        <path className="life-cpu-signal life-cpu-signal-d" pathLength="1" d="M210 219V255H268" />
+        <path className="life-cpu-signal life-cpu-signal-e" pathLength="1" d="M150 219V255H77" />
       </g>
 
       <g className="life-cpu-chip">
@@ -159,19 +159,19 @@ function MobileCircuit() {
       </g>
 
       <g className="life-cpu-traces">
-        <path d="M118 70H88V48H61" />
-        <path d="M202 70H242V38H255" />
-        <path d="M202 102H257V115H282" />
-        <path d="M182 138V181H265" />
-        <path d="M134 138V180H69" />
+        <path d="M106 70H88V48H61" />
+        <path d="M214 70H242V38H255" />
+        <path d="M214 102H257V115H282" />
+        <path d="M182 150V181H265" />
+        <path d="M134 150V180H69" />
       </g>
 
       <g className="life-cpu-signals">
-        <path className="life-cpu-signal life-cpu-signal-a" pathLength="1" d="M118 70H88V48H61" />
-        <path className="life-cpu-signal life-cpu-signal-b" pathLength="1" d="M202 70H242V38H255" />
-        <path className="life-cpu-signal life-cpu-signal-c" pathLength="1" d="M202 102H257V115H282" />
-        <path className="life-cpu-signal life-cpu-signal-d" pathLength="1" d="M182 138V181H265" />
-        <path className="life-cpu-signal life-cpu-signal-e" pathLength="1" d="M134 138V180H69" />
+        <path className="life-cpu-signal life-cpu-signal-a" pathLength="1" d="M106 70H88V48H61" />
+        <path className="life-cpu-signal life-cpu-signal-b" pathLength="1" d="M214 70H242V38H255" />
+        <path className="life-cpu-signal life-cpu-signal-c" pathLength="1" d="M214 102H257V115H282" />
+        <path className="life-cpu-signal life-cpu-signal-d" pathLength="1" d="M182 150V181H265" />
+        <path className="life-cpu-signal life-cpu-signal-e" pathLength="1" d="M134 150V180H69" />
       </g>
 
       <g className="life-cpu-chip">

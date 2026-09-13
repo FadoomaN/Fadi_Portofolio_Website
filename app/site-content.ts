@@ -13,9 +13,11 @@ export const siteContent = {
   },
   navigation: [
     { href: '/', label: 'Home', index: '01', current: true, disabled: false },
-    { href: '/#about', label: 'About', index: '02', current: false, disabled: false },
-    { href: '/#lab', label: 'Lab', index: '03', current: false, disabled: false },
-    { href: '/experiences', label: 'Experiences', index: '04', current: false, disabled: false },
+    { href: '/about', label: 'About', index: '02', current: false, disabled: false },
+    { href: '/journey', label: 'Journey', index: '03', current: false, disabled: false },
+    { href: '/projects', label: 'Projects', index: '04', current: false, disabled: false },
+    { href: '/experiences', label: 'Experience', index: '05', current: false, disabled: false },
+    { href: '/contact', label: 'Contact', index: '06', current: false, disabled: false },
   ],
 } as const;
 
