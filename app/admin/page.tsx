@@ -28,32 +28,31 @@ export default async function AdminPage() {
     redirect('/authenticator');
   }
 
-  const [experienceResult, projectResult, videoResult, profileResult, privateContactResult, aboutResult, contactResult, journeyResult, journeyUpdateResult, projectUpdateResult] = await Promise.all([
+  const [
+    experienceResult,
+    profileResult,
+    aboutResult,
+    aboutSectionResult,
+    contactResult,
+    threadResult,
+    threadEntryResult,
+    privateContactResult,
+  ] = await Promise.all([
     supabase
       .from('experiences')
       .select('id, organization, role, employment_type, location, summary, start_date, end_date, is_current, status, sort_order, updated_at', { count: 'exact' })
       .order('sort_order', { ascending: true })
       .order('start_date', { ascending: false }),
     supabase
-      .from('projects')
-      .select('id, title, slug, summary, technical_description, cover_image_url, github_url, live_url, tags, status, featured, sort_order, updated_at', { count: 'exact' })
-      .order('updated_at', { ascending: false })
-      .limit(6),
-    supabase
-      .from('videos')
-      .select('id, title, status, updated_at', { count: 'exact' })
-      .order('updated_at', { ascending: false })
-      .limit(6),
-    supabase
       .from('site_profile')
-      .select('first_name, last_name, role, kicker, updated_at')
+      .select('first_name, last_name, role, kicker, portrait_media_reference, portrait_alt, portrait_object_position, updated_at')
       .eq('id', 1)
       .maybeSingle(),
     supabase.from('about_content').select('id, title, intro, body, sections, media_reference, updated_at').eq('id', 1).maybeSingle(),
+    supabase.from('about_sections').select('id, about_id, label, heading, body, media_reference, media_alt, media_position, media_shape, meta, sort_order, updated_at').eq('about_id', 1).order('sort_order').order('created_at'),
     supabase.from('public_contact_settings').select('id, email, github_url, linkedin_url, cv_url, updated_at').eq('id', 1).maybeSingle(),
-    supabase.from('journey_threads').select('id, title, slug, description, cover_media_reference, status, featured, sort_order, updated_at', { count: 'exact' }).order('sort_order'),
-    supabase.from('journey_updates').select('id, thread_id, title, published_on, content, media_reference, status, sort_order, updated_at', { count: 'exact' }).order('sort_order'),
-    supabase.from('project_updates').select('id, project_id, title, published_on, content, media_reference, status, sort_order, updated_at', { count: 'exact' }).order('sort_order'),
+    supabase.from('threads').select('id, title, slug, destination, category, description, technical_description, cover_media_reference, github_url, live_url, tags, status, featured, sort_order, updated_at', { count: 'exact' }).order('updated_at', { ascending: false }),
+    supabase.from('thread_entries').select('id, thread_id, title, published_on, content, status, sort_order, updated_at', { count: 'exact' }).order('sort_order'),
     supabase
       .from('admin_contact_settings')
       .select('operations_email, phone_number, timezone, updated_at')
@@ -67,16 +66,12 @@ export default async function AdminPage() {
       <main className="admin-canvas">
         <AdminWorkspace
           experiences={experienceResult.data ?? []}
-          projects={projectResult.data ?? []}
-          videos={videoResult.data ?? []}
           experienceCount={experienceResult.count ?? 0}
-          projectCount={projectResult.count ?? 0}
-          videoCount={videoResult.count ?? 0}
-          journeyThreads={journeyResult.data ?? []}
-          journeyUpdates={journeyUpdateResult.data ?? []}
-          journeyCount={journeyResult.count ?? 0}
-          projectUpdates={projectUpdateResult.data ?? []}
+          threads={threadResult.data ?? []}
+          threadEntries={threadEntryResult.data ?? []}
+          threadCount={threadResult.count ?? 0}
           about={aboutResult.data}
+          aboutSections={aboutSectionResult.data ?? []}
           publicContact={contactResult.data}
           profile={profileResult.data}
           privateContact={privateContactResult.data}

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 type ProfileInput = {
@@ -6,6 +7,9 @@ type ProfileInput = {
   lastName?: unknown;
   role?: unknown;
   kicker?: unknown;
+  portraitMediaReference?: unknown;
+  portraitAlt?: unknown;
+  portraitObjectPosition?: unknown;
   operationsEmail?: unknown;
   phoneNumber?: unknown;
   timezone?: unknown;
@@ -52,6 +56,9 @@ export async function POST(request: NextRequest) {
   const lastName = cleanText(body.lastName);
   const role = cleanText(body.role);
   const kicker = cleanText(body.kicker);
+  const portraitMediaReference = cleanText(body.portraitMediaReference);
+  const portraitAlt = cleanText(body.portraitAlt);
+  const portraitObjectPosition = cleanText(body.portraitObjectPosition) || 'center';
   const operationsEmail = cleanText(body.operationsEmail).toLocaleLowerCase('en-US');
   const phoneNumber = cleanText(body.phoneNumber).replace(/[\s()-]/g, '');
   const timezone = cleanText(body.timezone);
@@ -75,6 +82,9 @@ export async function POST(request: NextRequest) {
   if (!ALLOWED_TIMEZONES.has(timezone)) {
     return NextResponse.json({ error: 'Select a supported timezone.' }, { status: 400 });
   }
+  if (!['center', 'top', 'bottom'].includes(portraitObjectPosition)) {
+    return NextResponse.json({ error: 'Select a valid portrait crop.' }, { status: 400 });
+  }
 
   const { error } = await supabase.rpc('save_admin_profile', {
     p_first_name: firstName,
@@ -90,9 +100,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'The profile could not be saved.' }, { status: 500 });
   }
 
+  const { data: updatedProfile, error: portraitError } = await supabase
+    .from('site_profile')
+    .update({
+      portrait_media_reference: portraitMediaReference || null,
+      portrait_alt: portraitAlt,
+      portrait_object_position: portraitObjectPosition,
+    })
+    .eq('id', 1)
+    .select('first_name, last_name, role, kicker, portrait_media_reference, portrait_alt, portrait_object_position, updated_at')
+    .single();
+
+  if (portraitError) {
+    return NextResponse.json({ error: 'The portrait settings could not be saved.' }, { status: 500 });
+  }
+
+  revalidatePath('/');
   return NextResponse.json({
     ok: true,
-    profile: { firstName, lastName, role, kicker },
+    profile: updatedProfile,
     privateContact: { operationsEmail, phoneNumber, timezone },
   });
 }

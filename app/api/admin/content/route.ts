@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const STATUSES = new Set(['draft', 'published', 'archived']);
+const DESTINATIONS = new Set(['journey', 'projects']);
 
 function text(value: unknown) {
   return typeof value === 'string' ? value.trim() : '';
@@ -44,14 +46,45 @@ export async function POST(request: NextRequest) {
   if (kind === 'about') {
     const record = {
       id: 1,
-      title: text(body.title) || 'ABOUT',
       intro: text(body.intro),
-      body: text(body.body),
-      sections: Array.isArray(body.sections) ? body.sections : [],
-      media_reference: text(body.mediaReference) || null,
     };
-    const { data, error } = await auth.supabase.from('about_content').upsert(record).select().single();
+    const { data, error } = await auth.supabase.from('about_content').update({ intro: record.intro }).eq('id', 1).select().single();
     if (error) return NextResponse.json({ error: 'About content could not be saved.' }, { status: 500 });
+    if (Array.isArray(body.sections)) {
+      const sections = body.sections.filter((section): section is Record<string, unknown> => Boolean(section) && typeof section === 'object').map((section, index) => {
+        const position = text(section.media_position) || 'right';
+        const shape = text(section.media_shape) || 'landscape';
+        if (!['left', 'right'].includes(position) || !['portrait', 'landscape', 'square'].includes(shape)) return null;
+        return {
+          ...(UUID.test(text(section.id)) ? { id: text(section.id) } : {}),
+          about_id: 1,
+          label: text(section.label),
+          heading: text(section.heading),
+          body: text(section.body),
+          media_reference: text(section.media_reference) || null,
+          media_alt: text(section.media_alt),
+          media_position: position,
+          media_shape: shape,
+          meta: text(section.meta),
+          sort_order: Number.isInteger(Number(section.sort_order)) ? Number(section.sort_order) : index,
+        };
+      });
+      if (sections.some((section) => section === null)) return NextResponse.json({ error: 'About section media settings are invalid.' }, { status: 400 });
+      const validSections = sections as Record<string, unknown>[];
+      const submittedIds = validSections.map((section) => section.id).filter((value): value is string => typeof value === 'string');
+      const { data: existingSections, error: existingError } = await auth.supabase.from('about_sections').select('id').eq('about_id', 1);
+      if (existingError) return NextResponse.json({ error: 'About sections could not be loaded.' }, { status: 500 });
+      const removedIds = (existingSections ?? []).map((section) => section.id).filter((sectionId) => !submittedIds.includes(sectionId));
+      const { error: deleteError } = removedIds.length
+        ? await auth.supabase.from('about_sections').delete().in('id', removedIds)
+        : { error: null };
+      if (deleteError) return NextResponse.json({ error: 'About sections could not be removed.' }, { status: 500 });
+      const { error: sectionError } = validSections.length
+        ? await auth.supabase.from('about_sections').upsert(validSections)
+        : await auth.supabase.from('about_sections').delete().eq('about_id', 1);
+      if (sectionError) return NextResponse.json({ error: 'About sections could not be saved.' }, { status: 500 });
+    }
+    revalidatePath('/about');
     return NextResponse.json({ ok: true, record: data });
   }
 
@@ -68,7 +101,33 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, record: data });
   }
 
-  if (!['journey-thread', 'journey-update', 'project', 'project-update'].includes(kind)) {
+  if (kind === 'about-section') {
+    const shape = text(body.mediaShape) || 'landscape';
+    const position = text(body.mediaPosition) || 'right';
+    const sectionRecord = {
+      about_id: 1,
+      label: text(body.label),
+      heading: text(body.heading),
+      body: text(body.body),
+      media_reference: text(body.mediaReference) || null,
+      media_alt: text(body.mediaAlt),
+      media_position: position,
+      media_shape: shape,
+      meta: text(body.meta),
+      sort_order: sortOrder,
+    };
+    if (!['portrait', 'landscape', 'square'].includes(shape) || !['left', 'right'].includes(position)) {
+      return NextResponse.json({ error: 'Choose a valid image format and position.' }, { status: 400 });
+    }
+    const query = id
+      ? auth.supabase.from('about_sections').update(sectionRecord).eq('id', id)
+      : auth.supabase.from('about_sections').insert(sectionRecord);
+    const { data, error } = await query.select().single();
+    if (error) return NextResponse.json({ error: 'The About section could not be saved.' }, { status: 500 });
+    return NextResponse.json({ ok: true, record: data });
+  }
+
+  if (!['thread', 'thread-entry', 'journey-thread', 'journey-update', 'project', 'project-update'].includes(kind)) {
     return NextResponse.json({ error: 'The content type is invalid.' }, { status: 400 });
   }
 
@@ -79,7 +138,43 @@ export async function POST(request: NextRequest) {
 
   let table: string;
   let record: Record<string, unknown>;
-  if (kind === 'journey-thread') {
+  if (kind === 'thread') {
+    const slug = text(body.slug);
+    const destination = text(body.destination);
+    if (!SLUG.test(slug)) return NextResponse.json({ error: 'Use a lowercase URL slug.' }, { status: 400 });
+    if (!DESTINATIONS.has(destination)) return NextResponse.json({ error: 'Choose Journey or Projects as the destination.' }, { status: 400 });
+    table = 'threads';
+    record = {
+      title,
+      slug,
+      destination,
+      category: text(body.category),
+      description: text(body.description) || text(body.summary),
+      technical_description: destination === 'projects' ? text(body.technicalDescription) || null : null,
+      cover_media_reference: text(body.coverMediaReference) || null,
+      github_url: destination === 'projects' ? text(body.githubUrl) || null : null,
+      live_url: destination === 'projects' ? text(body.liveUrl) || null : null,
+      tags: Array.isArray(body.tags) ? body.tags.filter((tag): tag is string => typeof tag === 'string') : [],
+      status,
+      featured: body.featured === true,
+      sort_order: sortOrder,
+      ...(id ? {} : { created_by: auth.user.id }),
+    };
+  } else if (kind === 'thread-entry') {
+    const parentId = text(body.parentId);
+    const date = text(body.date);
+    if (!UUID.test(parentId) || !DATE.test(date)) return NextResponse.json({ error: 'A valid thread and date are required.' }, { status: 400 });
+    table = 'thread_entries';
+    record = {
+      thread_id: parentId,
+      title,
+      published_on: date,
+      content: text(body.content),
+      status,
+      sort_order: sortOrder,
+      ...(id ? {} : { created_by: auth.user.id }),
+    };
+  } else if (kind === 'journey-thread') {
     const slug = text(body.slug);
     if (!SLUG.test(slug)) return NextResponse.json({ error: 'Use a lowercase URL slug.' }, { status: 400 });
     table = 'journey_threads';
@@ -124,7 +219,7 @@ export async function DELETE(request: NextRequest) {
   try { body = await request.json(); } catch { return NextResponse.json({ error: 'The delete request is invalid.' }, { status: 400 }); }
   const kind = text(body.kind);
   const id = text(body.id);
-  const table = { 'journey-thread': 'journey_threads', 'journey-update': 'journey_updates', project: 'projects', 'project-update': 'project_updates' }[kind as string];
+  const table = { thread: 'threads', 'thread-entry': 'thread_entries', 'about-section': 'about_sections', 'journey-thread': 'journey_threads', 'journey-update': 'journey_updates', project: 'projects', 'project-update': 'project_updates' }[kind as string];
   if (!table || !UUID.test(id)) return NextResponse.json({ error: 'The selected record is invalid.' }, { status: 400 });
   const { error } = await auth.supabase.from(table).delete().eq('id', id);
   if (error) return NextResponse.json({ error: 'The content could not be deleted.' }, { status: 500 });

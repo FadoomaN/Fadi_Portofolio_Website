@@ -1,5 +1,4 @@
 import SiteHeader from './site-header';
-import CircuitDivider from './circuit-divider';
 import LifeCpu from './life-cpu';
 import { siteContent } from './site-content';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
@@ -8,7 +7,7 @@ export default async function Home() {
   const supabase = await createServerSupabaseClient();
   const { data: storedProfile } = await supabase
     .from('site_profile')
-    .select('first_name, last_name, role, kicker')
+    .select('first_name, last_name, role, kicker, portrait_media_reference, portrait_alt, portrait_object_position')
     .eq('id', 1)
     .maybeSingle();
   const profile = {
@@ -16,12 +15,14 @@ export default async function Home() {
     lastName: storedProfile?.last_name ?? siteContent.profile.lastName,
     role: storedProfile?.role ?? siteContent.profile.role,
     kicker: storedProfile?.kicker ?? siteContent.profile.kicker,
+    portrait: storedProfile?.portrait_media_reference || '/fadi-gray-suit.jpg',
+    portraitAlt: storedProfile?.portrait_alt || `${storedProfile?.first_name ?? siteContent.profile.firstName} ${storedProfile?.last_name ?? siteContent.profile.lastName} portrait`,
+    portraitObjectPosition: storedProfile?.portrait_object_position ?? 'center',
   };
 
   return (
     <>
       <SiteHeader homeIsCurrent />
-      <CircuitDivider />
 
       <main className="blank-canvas">
        <section className="home-hero" aria-labelledby="hero-title">
@@ -53,12 +54,30 @@ export default async function Home() {
               {/* Vinext's current Next Image shim crashes during local hydration, so keep this native. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={siteContent.profile.portrait.src}
-                alt={`${profile.firstName} ${profile.lastName} wearing a gray suit`}
+                src={profile.portrait}
+                alt={profile.portraitAlt}
+                style={{ objectPosition: profile.portraitObjectPosition }}
               />
             </div>
             <span className="portrait-frame portrait-frame-bottom" aria-hidden="true" />
           </figure>
+        </div>
+
+        <div className="circuit-divider" aria-hidden="true">
+          <span className="circuit-rail" />
+          <span className="circuit-chip" />
+          <span className="circuit-trace circuit-trace-a" />
+          <span className="circuit-trace circuit-trace-b" />
+          <span className="circuit-trace circuit-trace-c" />
+          <span className="circuit-trace circuit-trace-d" />
+          <span className="circuit-trace circuit-trace-e" />
+          <span className="circuit-trace circuit-trace-f" />
+          <span className="circuit-node circuit-node-a" />
+          <span className="circuit-node circuit-node-b" />
+          <span className="circuit-node circuit-node-c" />
+          <span className="circuit-node circuit-node-d" />
+          <span className="circuit-node circuit-node-e" />
+          <span className="circuit-node circuit-node-f" />
         </div>
 
        </section>

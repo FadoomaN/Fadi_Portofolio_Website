@@ -9,13 +9,13 @@ export const metadata: Metadata = {
 };
 
 export default async function AboutPage() {
-  const { data } = await (await createServerSupabaseClient())
-    .from('about_content')
-    .select('title, intro, body, media_reference')
-    .eq('id', 1)
-    .maybeSingle();
+  const supabase = await createServerSupabaseClient();
+  const [{ data }, { data: storedSections }] = await Promise.all([
+    supabase.from('about_content').select('intro').eq('id', 1).maybeSingle(),
+    supabase.from('about_sections').select('id, label, heading, body, media_reference, media_alt, media_position, media_shape, meta, sort_order').eq('about_id', 1).order('sort_order').order('created_at'),
+  ]);
   const intro = data?.intro || 'A temporary introduction will live here while the personal story is being shaped.';
-  const body = data?.body || 'Temporary editorial copy is used to establish the rhythm, scale and reading experience of this page.';
+  const sections = storedSections ?? [];
 
   return (
     <>
@@ -25,47 +25,25 @@ export default async function AboutPage() {
         <div className="about-frame">
           <header className="about-intro" aria-labelledby="about-title">
             <p className="about-kicker"><span>02 / Personal profile</span><i aria-hidden="true" /><span>Editorial draft</span></p>
-            <h1 id="about-title">{data?.title ?? 'ABOUT'}</h1>
+            <h1 id="about-title">ABOUT ME</h1>
             <p>{intro}</p>
           </header>
           <CircuitDivider />
 
           <div className="about-story">
-            <section className="about-story-section" aria-labelledby="about-origin-title">
-              <div className="about-visual about-visual-portrait" aria-label="Temporary portrait placeholder">
-                <span>VISUAL / 01</span><i aria-hidden="true" /><strong>PORTRAIT<br />PLACEHOLDER</strong>
-              </div>
-              <div className="about-story-copy">
-                <p className="about-section-label">01 / Origin</p>
-                <h2 id="about-origin-title">A LITTLE ABOUT ME</h2>
-                <p>{body}</p>
-                <span className="about-meta">PROFILE / 001</span>
-              </div>
-            </section>
-
-            <section className="about-story-section about-story-section-reverse" aria-labelledby="about-thinking-title">
-              <div className="about-story-copy">
-                <p className="about-section-label">02 / Method</p>
-                <h2 id="about-thinking-title">HOW I THINK</h2>
-                <p>Temporary copy for the way ideas become clear: observe, question, build, test and refine.</p>
-                <span className="about-meta">PROCESS / ITERATION</span>
-              </div>
-              <div className="about-visual about-visual-landscape" aria-label="Temporary landscape placeholder">
-                <span>FRAME / 02</span><i aria-hidden="true" /><strong>LANDSCAPE<br />PLACEHOLDER</strong>
-              </div>
-            </section>
-
-            <section className="about-story-section" aria-labelledby="about-beyond-title">
-              <div className="about-visual about-visual-square" aria-label="Temporary square visual placeholder">
-                <span>FIELD / 03</span><i aria-hidden="true" /><strong>IMAGE<br />PLACEHOLDER</strong>
-              </div>
-              <div className="about-story-copy">
-                <p className="about-section-label">03 / Outside the interface</p>
-                <h2 id="about-beyond-title">BEYOND THE SCREEN</h2>
-                <p>Temporary copy for the human details, interests and questions that give the work its wider context.</p>
-                <span className="about-meta">OPEN THREAD / 003</span>
-              </div>
-            </section>
+            {sections.map((section, index) => (
+              <section className={`about-story-section ${section.media_position === 'right' ? 'about-story-section-reverse' : ''}`} aria-labelledby={`about-section-${section.id}`} key={section.id}>
+                <div className={`about-visual about-visual-${section.media_shape}`} aria-label={section.media_alt || `${section.media_shape} visual`}>
+                  {section.media_reference ? <img src={section.media_reference} alt={section.media_alt} /> : <><span>VISUAL / {String(index + 1).padStart(2, '0')}</span><i aria-hidden="true" /><strong>{section.media_shape.toUpperCase()}<br />PLACEHOLDER</strong></>}
+                </div>
+                <div className="about-story-copy">
+                  <p className="about-section-label">{section.label}</p>
+                  <h2 id={`about-section-${section.id}`}>{section.heading}</h2>
+                  <p>{section.body}</p>
+                  <span className="about-meta">{section.meta}</span>
+                </div>
+              </section>
+            ))}
           </div>
           <p className="about-footer-note">ABOUT / CONTENT IN PROGRESS</p>
         </div>

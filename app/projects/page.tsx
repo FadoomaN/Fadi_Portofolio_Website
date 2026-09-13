@@ -7,7 +7,17 @@ export const metadata: Metadata = {
   description: 'Technical projects and development updates.',
 };
 
-export default function ProjectsPage() {
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+
+export default async function ProjectsPage() {
+  const supabase = await createServerSupabaseClient();
+  const { data: threads } = await supabase
+    .from('threads')
+    .select('id, title, slug, category, description, cover_media_reference, featured, sort_order')
+    .eq('destination', 'projects')
+    .eq('status', 'published')
+    .order('featured', { ascending: false })
+    .order('sort_order', { ascending: true });
   return (
     <>
       <SiteHeader revealImmediately activeHref="/projects" />
@@ -17,7 +27,11 @@ export default function ProjectsPage() {
           <p className="placeholder-kicker">04 / Engineering work</p>
           <h1 id="projects-title">PROJECTS</h1>
           <p className="placeholder-copy">Technical projects will be organized into development threads, from concept through testing and final result.</p>
-          <p className="placeholder-status">Projects in progress.</p>
+          {threads?.length ? (
+            <div className="placeholder-links">
+              {threads.map((thread) => <a href={`/projects#${thread.slug}`} key={thread.id}>{thread.title}</a>)}
+            </div>
+          ) : <p className="placeholder-status">Projects in progress.</p>}
         </section>
       </main>
     </>

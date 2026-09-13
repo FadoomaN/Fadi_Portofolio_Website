@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 type ExperienceInput = {
@@ -131,6 +132,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'The experience could not be saved.' }, { status: 500 });
   }
 
+  revalidatePath('/experiences');
   return NextResponse.json({ ok: true, experience: data });
 }
 
@@ -157,5 +159,6 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'The experience could not be deleted.' }, { status: 500 });
   }
 
+  revalidatePath('/experiences');
   return NextResponse.json({ ok: true });
 }

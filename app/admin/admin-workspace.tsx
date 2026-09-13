@@ -3,13 +3,15 @@
 import { ChangeEvent, FormEvent, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-type PanelId = 'overview' | 'home' | 'about' | 'journey' | 'projects' | 'experiences' | 'contact' | 'account';
+type PanelId = 'overview' | 'profile' | 'about' | 'threads' | 'career' | 'contact' | 'security';
 
 type ContentRecord = {
   id: string;
   title: string;
   status: string;
   updated_at: string;
+  destination: 'journey' | 'projects';
+  category?: string;
   slug?: string;
   description?: string;
   summary?: string;
@@ -23,13 +25,12 @@ type ContentRecord = {
   sort_order?: number;
 };
 
-type JourneyUpdate = {
+type ThreadEntry = {
   id: string;
   thread_id: string;
   title: string;
   published_on: string;
   content: string;
-  media_reference: string | null;
   status: string;
   sort_order: number;
   updated_at: string;
@@ -42,6 +43,21 @@ type AboutRecord = {
   body: string;
   sections: unknown[];
   media_reference: string | null;
+  updated_at: string;
+};
+
+type AboutSectionRecord = {
+  id: string;
+  about_id: number;
+  label: string;
+  heading: string;
+  body: string;
+  media_reference: string | null;
+  media_alt: string;
+  media_position: 'left' | 'right';
+  media_shape: 'portrait' | 'landscape' | 'square';
+  meta: string;
+  sort_order: number;
   updated_at: string;
 };
 
@@ -59,6 +75,9 @@ type ProfileRecord = {
   last_name: string;
   role: string;
   kicker: string;
+  portrait_media_reference: string | null;
+  portrait_alt: string;
+  portrait_object_position: 'center' | 'top' | 'bottom';
   updated_at: string;
 };
 
@@ -86,17 +105,13 @@ type ExperienceRecord = {
 
 type AdminWorkspaceProps = {
   experiences: ExperienceRecord[];
-  projects: ContentRecord[];
-  videos: ContentRecord[];
-  journeyThreads: ContentRecord[];
-  journeyUpdates: JourneyUpdate[];
-  projectUpdates: JourneyUpdate[];
-  journeyCount: number;
+  threads: ContentRecord[];
+  threadEntries: ThreadEntry[];
+  threadCount: number;
   about: AboutRecord | null;
+  aboutSections: AboutSectionRecord[];
   publicContact: PublicContactRecord | null;
   experienceCount: number;
-  projectCount: number;
-  videoCount: number;
   profile: ProfileRecord | null;
   privateContact: PrivateContactRecord | null;
 };
@@ -119,20 +134,25 @@ type ProfileFormState = {
   lastName: string;
   role: string;
   kicker: string;
+  portraitMediaReference: string;
+  portraitAlt: string;
+  portraitObjectPosition: 'center' | 'top' | 'bottom';
   operationsEmail: string;
   phoneNumber: string;
   timezone: string;
 };
 
+const DEFAULT_PORTRAIT_REFERENCE = '/fadi-gray-suit.jpg';
+const DEFAULT_PORTRAIT_ALT = 'Fadi Al Hazim wearing a gray suit';
+
 const menuItems: Array<{ id: PanelId; index: string; label: string }> = [
-  { id: 'overview', index: '01', label: 'Dashboard' },
-  { id: 'home', index: '02', label: 'Home' },
+  { id: 'overview', index: '01', label: 'Overview' },
+  { id: 'profile', index: '02', label: 'Profile' },
   { id: 'about', index: '03', label: 'About' },
-  { id: 'journey', index: '04', label: 'Journey' },
-  { id: 'projects', index: '05', label: 'Projects' },
-  { id: 'experiences', index: '06', label: 'Experience' },
-  { id: 'contact', index: '07', label: 'Contact' },
-  { id: 'account', index: '08', label: 'Security / Account' },
+  { id: 'threads', index: '04', label: 'Threads' },
+  { id: 'career', index: '05', label: 'Career' },
+  { id: 'contact', index: '06', label: 'Contact' },
+  { id: 'security', index: '07', label: 'Security' },
 ];
 
 const EMPTY_EXPERIENCE: ExperienceFormState = {
@@ -167,6 +187,15 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
+async function uploadMedia(file: File) {
+  const payload = new FormData();
+  payload.set('file', file);
+  const response = await fetch('/api/admin/media', { method: 'POST', body: payload });
+  const result = await response.json() as { url?: string; error?: string };
+  if (!response.ok || !result.url) throw new Error(result.error ?? 'The image could not be uploaded.');
+  return result.url;
+}
+
 function RecordList({ records, emptyLabel }: { records: ContentRecord[]; emptyLabel: string }) {
   if (!records.length) {
     return (
@@ -182,24 +211,25 @@ function RecordList({ records, emptyLabel }: { records: ContentRecord[]; emptyLa
     kind,
     records,
     updates,
-    updateParentKey,
   }: {
-    kind: 'journey-thread' | 'project';
+    kind: 'thread';
     records: ContentRecord[];
-    updates: JourneyUpdate[];
-    updateParentKey: 'thread_id' | 'project_id';
+    updates: ThreadEntry[];
   }) {
+    const router = useRouter();
     const [selected, setSelected] = useState<ContentRecord | null>(records[0] ?? null);
     const [form, setForm] = useState(() => records[0] ?? {
-      id: '', title: '', slug: '', status: 'draft', updated_at: '', description: '', summary: '',
+      id: '', title: '', slug: '', destination: 'journey', category: '', status: 'draft', updated_at: '', description: '', summary: '',
       technical_description: '', cover_media_reference: '', cover_image_url: '', github_url: '',
       live_url: '', tags: [], featured: false, sort_order: 0,
     });
     const [notice, setNotice] = useState('');
     const [error, setError] = useState('');
-    const [selectedUpdate, setSelectedUpdate] = useState<JourneyUpdate | null>(null);
-    const isProject = kind === 'project';
-    const relatedUpdates = selected ? updates.filter((update) => update[updateParentKey] === selected.id) : [];
+    const [selectedUpdate, setSelectedUpdate] = useState<ThreadEntry | null>(null);
+    const [filter, setFilter] = useState('all');
+    const isProject = form.destination === 'projects';
+    const relatedUpdates = selected ? updates.filter((update) => update.thread_id === selected.id) : [];
+    const visibleRecords = records.filter((record) => filter === 'all' || record.destination === filter || record.status === filter);
 
     const edit = (record: ContentRecord) => {
       setSelected(record);
@@ -217,29 +247,29 @@ function RecordList({ records, emptyLabel }: { records: ContentRecord[]; emptyLa
       setNotice('');
       const response = await fetch('/api/admin/content', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, kind, technicalDescription: form.technical_description, coverMediaReference: form.cover_media_reference, coverImage: form.cover_image_url, githubUrl: form.github_url, liveUrl: form.live_url }),
+        body: JSON.stringify({ ...form, kind: 'thread', technicalDescription: form.technical_description, coverMediaReference: form.cover_media_reference, githubUrl: form.github_url, liveUrl: form.live_url }),
       });
       const result = await response.json() as { error?: string };
       if (!response.ok) setError(result.error ?? 'The content could not be saved.');
-      else setNotice(`${isProject ? 'Project' : 'Journey thread'} saved. Refresh to see the updated list.`);
+      else { setNotice('Thread saved.'); router.refresh(); }
     };
     const remove = async () => {
       if (!selected?.id) return;
       const response = await fetch('/api/admin/content', {
         method: 'DELETE', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kind, id: selected.id }),
+        body: JSON.stringify({ kind: 'thread', id: selected.id }),
       });
       if (!response.ok) setError('The record could not be deleted.');
-      else { setSelected(null); setNotice('Record deleted. Refresh to update the browser.'); }
+      else { setSelected(null); setNotice('Thread deleted.'); router.refresh(); }
     };
     const addUpdate = async () => {
       if (!selected?.id) return;
       const response = await fetch('/api/admin/content', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kind: isProject ? 'project-update' : 'journey-update', parentId: selected.id, title: 'Untitled update', date: new Date().toISOString().slice(0, 10), content: '', status: 'draft', sortOrder: relatedUpdates.length }),
+        body: JSON.stringify({ kind: 'thread-entry', parentId: selected.id, title: 'Untitled entry', date: new Date().toISOString().slice(0, 10), content: '', status: 'draft', sortOrder: relatedUpdates.length }),
       });
       if (!response.ok) setError('The update could not be created.');
-      else setNotice('Update created. Refresh to edit it.');
+      else { setNotice('Entry created.'); router.refresh(); }
     };
     const saveUpdate = async (formElement: HTMLDivElement) => {
       if (!selectedUpdate) return;
@@ -250,37 +280,40 @@ function RecordList({ records, emptyLabel }: { records: ContentRecord[]; emptyLa
       const response = await fetch('/api/admin/content', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          kind: isProject ? 'project-update' : 'journey-update', id: selectedUpdate.id, parentId: selected.id,
+          kind: 'thread-entry', id: selectedUpdate.id, parentId: selected.id,
           title: formData.get('title'), date: formData.get('date'), content: formData.get('content'),
           mediaReference: formData.get('mediaReference'), status: formData.get('status'), sortOrder: Number(formData.get('sortOrder')),
         }),
       });
-      setNotice(response.ok ? 'Update saved. Refresh to see the latest data.' : 'The update could not be saved.');
+      if (response.ok) { setNotice('Entry saved.'); router.refresh(); } else setNotice('The entry could not be saved.');
     };
     const deleteUpdate = async () => {
       if (!selectedUpdate) return;
       const response = await fetch('/api/admin/content', {
         method: 'DELETE', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kind: isProject ? 'project-update' : 'journey-update', id: selectedUpdate.id }),
+        body: JSON.stringify({ kind: 'thread-entry', id: selectedUpdate.id }),
       });
-      setNotice(response.ok ? 'Update deleted. Refresh to see the latest data.' : 'The update could not be deleted.');
+      if (response.ok) { setNotice('Entry deleted.'); router.refresh(); } else setNotice('The entry could not be deleted.');
     };
 
     return (
       <div className="admin-content-manager">
-        <aside className="admin-experience-browser" aria-label={`${isProject ? 'Projects' : 'Journey threads'} browser`}>
-          <div className="admin-experience-toolbar"><span>{String(records.length).padStart(2, '0')} records</span><button type="button" onClick={() => { setSelected(null); setForm({ ...form, id: '', title: '', slug: '' }); }}>+ New</button></div>
+        <aside className="admin-experience-browser" aria-label="Thread browser">
+          <div className="admin-experience-toolbar"><span>{String(visibleRecords.length).padStart(2, '0')} records</span><button type="button" onClick={() => { setSelected(null); setForm({ ...form, id: '', title: '', slug: '' }); }}>+ New</button></div>
+          <label className="admin-profile-field"><span>Filter</span><select value={filter} onChange={(event) => setFilter(event.target.value)}><option value="all">All</option><option value="journey">Journey</option><option value="projects">Projects</option><option value="draft">Draft</option><option value="published">Published</option><option value="archived">Archived</option></select></label>
           <div className="admin-experience-list">
-            {records.map((record) => <button className={selected?.id === record.id ? 'is-active' : ''} type="button" onClick={() => edit(record)} key={record.id}><span>{record.status}</span><strong>{record.title}</strong><small>{record.slug}</small></button>)}
-            {!records.length && <p className="admin-experience-list-empty">No records yet.</p>}
+            {visibleRecords.map((record) => <button className={selected?.id === record.id ? 'is-active' : ''} type="button" onClick={() => edit(record)} key={record.id}><span>{record.destination.toUpperCase()} / {record.status}</span><strong>{record.title}</strong><small>{record.category || record.slug}</small></button>)}
+            {!visibleRecords.length && <p className="admin-experience-list-empty">No records yet.</p>}
           </div>
         </aside>
         <form className="admin-profile-form" onSubmit={save}>
-          <fieldset className="admin-profile-section">
-            <legend><span>{isProject ? 'Technical project' : 'Personal thread'}</span><strong>{selected ? 'EDIT' : 'NEW'}</strong></legend>
+           <fieldset className="admin-profile-section">
+            <legend><span>Chronological thread</span><strong>{selected ? 'EDIT' : 'NEW'}</strong></legend>
             <div className="admin-profile-fields">
               <label className="admin-profile-field"><span>Title</span><input name="title" value={form.title ?? ''} onChange={change} required /></label>
               <label className="admin-profile-field"><span>Slug</span><input name="slug" value={form.slug ?? ''} onChange={change} required /></label>
+              <label className="admin-profile-field"><span>Publish to</span><select name="destination" value={form.destination} onChange={change} required><option value="journey">Journey</option><option value="projects">Projects</option></select></label>
+              <label className="admin-profile-field"><span>Category</span><input name="category" value={form.category ?? ''} onChange={change} /></label>
               <label className="admin-profile-field"><span>Status</span><select name="status" value={form.status} onChange={change}><option value="draft">Draft</option><option value="published">Published</option><option value="archived">Archived</option></select></label>
               <label className="admin-profile-field"><span>Sort order</span><input name="sort_order" type="number" value={form.sort_order ?? 0} onChange={change} /></label>
               <label className="admin-profile-field"><span>{isProject ? 'Summary' : 'Description'}</span><textarea name={isProject ? 'summary' : 'description'} value={(isProject ? form.summary : form.description) ?? ''} onChange={change} rows={4} /></label>
@@ -290,8 +323,8 @@ function RecordList({ records, emptyLabel }: { records: ContentRecord[]; emptyLa
               <label className="admin-profile-field"><span>Featured</span><input name="featured" type="checkbox" checked={form.featured === true} onChange={change} /></label>
             </div>
           </fieldset>
-          {selected && <fieldset className="admin-profile-section"><legend><span>Chronological updates</span><button type="button" onClick={addUpdate}>+ Add update</button></legend>{relatedUpdates.length ? relatedUpdates.map((update) => <button className="admin-record-row" type="button" key={update.id} onClick={() => setSelectedUpdate(update)}><strong>{update.title}</strong><span>{update.status}</span><time>{update.published_on}</time></button>) : <p className="admin-empty-state">No updates yet.</p>}</fieldset>}
-          {selectedUpdate && <div className="admin-profile-section"><div className="admin-profile-fields"><label className="admin-profile-field"><span>Update title</span><input name="title" defaultValue={selectedUpdate.title} /></label><label className="admin-profile-field"><span>Date</span><input name="date" type="date" defaultValue={selectedUpdate.published_on} /></label><label className="admin-profile-field"><span>Status</span><select name="status" defaultValue={selectedUpdate.status}><option value="draft">Draft</option><option value="published">Published</option><option value="archived">Archived</option></select></label><label className="admin-profile-field"><span>Order</span><input name="sortOrder" type="number" defaultValue={selectedUpdate.sort_order} /></label><label className="admin-profile-field"><span>Text / content</span><textarea name="content" rows={5} defaultValue={selectedUpdate.content} /></label><label className="admin-profile-field"><span>Media reference</span><input name="mediaReference" defaultValue={selectedUpdate.media_reference ?? ''} /></label></div><button className="admin-profile-save" type="button" onClick={(event) => saveUpdate(event.currentTarget.parentElement as HTMLDivElement)}>Save update</button><button className="admin-experience-delete" type="button" onClick={deleteUpdate}>Delete update</button></div>}
+          {selected && <fieldset className="admin-profile-section"><legend><span>Entries / updates</span><button type="button" onClick={addUpdate}>+ Add entry</button></legend>{relatedUpdates.length ? relatedUpdates.map((update) => <button className="admin-record-row" type="button" key={update.id} onClick={() => setSelectedUpdate(update)}><strong>{update.title}</strong><span>{update.status}</span><time>{update.published_on}</time></button>) : <p className="admin-empty-state">No entries yet.</p>}</fieldset>}
+          {selectedUpdate && <div className="admin-profile-section"><div className="admin-profile-fields"><label className="admin-profile-field"><span>Entry title</span><input name="title" defaultValue={selectedUpdate.title} /></label><label className="admin-profile-field"><span>Date</span><input name="date" type="date" defaultValue={selectedUpdate.published_on} /></label><label className="admin-profile-field"><span>Status</span><select name="status" defaultValue={selectedUpdate.status}><option value="draft">Draft</option><option value="published">Published</option><option value="archived">Archived</option></select></label><label className="admin-profile-field"><span>Order</span><input name="sortOrder" type="number" defaultValue={selectedUpdate.sort_order} /></label><label className="admin-profile-field"><span>Text / content</span><textarea name="content" rows={5} defaultValue={selectedUpdate.content} /></label></div><button className="admin-profile-save" type="button" onClick={(event) => saveUpdate(event.currentTarget.parentElement as HTMLDivElement)}>Save entry</button><button className="admin-experience-delete" type="button" onClick={deleteUpdate}>Delete entry</button></div>}
           <div className="admin-profile-actions"><div><p className="admin-profile-error" role="alert">{error}</p><p className="admin-profile-notice" role="status">{notice}</p></div>{selected && <button type="button" className="admin-experience-delete" onClick={remove}>Delete</button>}<button className="admin-profile-save" type="submit">Save</button></div>
         </form>
       </div>
@@ -414,7 +447,12 @@ function ExperienceEditor({ experiences }: { experiences: ExperienceRecord[] }) 
       setSelectedId(savedRecord.id);
       setSavedForm(nextForm);
       setForm(nextForm);
-      setNotice(selectedId ? 'Experience updated.' : 'Experience created.');
+      const statusNotice = savedRecord.status === 'published'
+        ? 'Experience published and visible on the Experience page.'
+        : savedRecord.status === 'archived'
+          ? 'Experience archived and hidden from the public site.'
+          : 'Experience saved as draft. It is not visible publicly.';
+      setNotice(statusNotice);
       router.refresh();
     } catch {
       setError('Connection unavailable. Your changes were not saved.');
@@ -476,7 +514,7 @@ function ExperienceEditor({ experiences }: { experiences: ExperienceRecord[] }) 
               onClick={() => selectRecord(record)}
               key={record.id}
             >
-              <span>{record.status}</span>
+              <span>{record.status.toUpperCase()}</span>
               <strong>{record.role}</strong>
               <small>{record.organization}</small>
               <time>{experiencePeriod(record)}</time>
@@ -493,7 +531,11 @@ function ExperienceEditor({ experiences }: { experiences: ExperienceRecord[] }) 
             <span>{selectedId ? 'Editing record' : 'New record'}</span>
             <h3>{form.role || 'Untitled experience'}</h3>
           </div>
-          <i className={`admin-experience-status is-${form.status}`}>{form.status}</i>
+          <div className="admin-experience-publication-state">
+            <span>Publication status</span>
+            <i className={`admin-experience-status is-${form.status}`}>{form.status.toUpperCase()}</i>
+            <small>{form.status === 'published' ? 'Visible on /experiences.' : form.status === 'archived' ? 'Archived and hidden from the public site.' : 'Draft — admin only, not visible publicly.'}</small>
+          </div>
         </div>
 
         <div className="admin-experience-fields">
@@ -528,7 +570,7 @@ function ExperienceEditor({ experiences }: { experiences: ExperienceRecord[] }) 
             <span>Current position</span>
           </label>
           <label className="admin-experience-field">
-            <span>Visibility</span>
+            <span>Publication status</span>
             <select name="status" value={form.status} onChange={handleChange}>
               <option value="draft">Draft</option>
               <option value="published">Published</option>
@@ -592,6 +634,9 @@ function ProfileEditor({
     lastName: profile?.last_name ?? '',
     role: profile?.role ?? '',
     kicker: profile?.kicker ?? '',
+    portraitMediaReference: profile?.portrait_media_reference || DEFAULT_PORTRAIT_REFERENCE,
+    portraitAlt: profile?.portrait_alt || DEFAULT_PORTRAIT_ALT,
+    portraitObjectPosition: profile?.portrait_object_position ?? 'center',
     operationsEmail: privateContact?.operations_email ?? '',
     phoneNumber: privateContact?.phone_number ?? '',
     timezone: privateContact?.timezone ?? 'Europe/Stockholm',
@@ -601,6 +646,7 @@ function ProfileEditor({
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const hasChanges = (Object.keys(form) as Array<keyof ProfileFormState>)
     .some((key) => form[key] !== savedForm[key]);
 
@@ -617,6 +663,21 @@ function ProfileEditor({
     setNotice('');
   };
 
+  const handlePortraitUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      const url = await uploadMedia(file);
+      setForm((current) => ({ ...current, portraitMediaReference: url }));
+      setNotice('Portrait uploaded. Save profile to persist it.');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'The portrait could not be uploaded.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError('');
@@ -629,7 +690,7 @@ function ProfileEditor({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       });
-      const result = (await response.json()) as { error?: string };
+      const result = (await response.json()) as { error?: string; profile?: ProfileRecord };
 
       if (!response.ok) {
         setError(result.error ?? 'The profile could not be saved.');
@@ -673,6 +734,35 @@ function ProfileEditor({
           <label className="admin-profile-field">
             <span>Introduction label</span>
             <input name="kicker" value={form.kicker} onChange={handleChange} maxLength={80} required />
+          </label>
+          <label className="admin-profile-field">
+            <span>Portrait</span>
+            <div className="admin-profile-upload">
+              <div className="admin-media-preview is-portrait">
+                {form.portraitMediaReference ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={form.portraitMediaReference} alt={form.portraitAlt} style={{ objectPosition: form.portraitObjectPosition }} />
+                ) : <span>No portrait selected.</span>}
+              </div>
+              <label className="admin-upload-button">
+                {isUploading ? 'Uploading…' : 'Choose image'}
+                <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handlePortraitUpload} disabled={isUploading} />
+              </label>
+              <button type="button" className="admin-profile-reset" onClick={() => setForm((current) => ({ ...current, portraitMediaReference: '' }))}>
+                Remove image
+              </button>
+              <input name="portraitMediaReference" value={form.portraitMediaReference} onChange={handleChange} aria-label="Portrait media reference" />
+            </div>
+          </label>
+          <label className="admin-profile-field">
+            <span>Portrait alt text</span>
+            <input name="portraitAlt" value={form.portraitAlt} onChange={handleChange} maxLength={180} />
+          </label>
+          <label className="admin-profile-field">
+            <span>Portrait crop</span>
+            <select name="portraitObjectPosition" value={form.portraitObjectPosition} onChange={handleChange}>
+              <option value="center">Center</option><option value="top">Top</option><option value="bottom">Bottom</option>
+            </select>
           </label>
         </div>
       </fieldset>
@@ -746,15 +836,185 @@ function ProfileEditor({
   );
 }
 
-function AboutEditor({ about }: { about: AboutRecord | null }) {
-  const [form, setForm] = useState({ title: about?.title ?? 'ABOUT', intro: about?.intro ?? '', body: about?.body ?? '', mediaReference: about?.media_reference ?? '' });
+function AboutEditor({ about, sections }: { about: AboutRecord | null; sections: AboutSectionRecord[] }) {
+  const [settings, setSettings] = useState({ title: about?.title ?? 'ABOUT', intro: about?.intro ?? '' });
+  const [savedSettings, setSavedSettings] = useState(settings);
+  const [records, setRecords] = useState(sections);
+  const [selectedId, setSelectedId] = useState<string | null>(sections[0]?.id ?? null);
+  const [draft, setDraft] = useState<AboutSectionRecord | null>(sections[0] ?? null);
   const [notice, setNotice] = useState('');
-  const save = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const response = await fetch('/api/admin/content', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'about', ...form }) });
-    setNotice(response.ok ? 'About content saved.' : 'About content could not be saved.');
+  const [error, setError] = useState('');
+
+  const selectSection = (section: AboutSectionRecord) => {
+    setSelectedId(section.id);
+    setDraft(section);
+    setError('');
+    setNotice('');
   };
-  return <form className="admin-profile-form" onSubmit={save}><fieldset className="admin-profile-section"><legend><span>Editable public content</span><strong>ABOUT</strong></legend><div className="admin-profile-fields"><label className="admin-profile-field"><span>Title</span><input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} /></label><label className="admin-profile-field"><span>Intro</span><textarea rows={3} value={form.intro} onChange={(event) => setForm({ ...form, intro: event.target.value })} /></label><label className="admin-profile-field"><span>Body / sections</span><textarea rows={10} value={form.body} onChange={(event) => setForm({ ...form, body: event.target.value })} /></label><label className="admin-profile-field"><span>Optional media reference</span><input value={form.mediaReference} onChange={(event) => setForm({ ...form, mediaReference: event.target.value })} /></label></div></fieldset><div className="admin-profile-actions"><p className="admin-profile-notice" role="status">{notice}</p><button className="admin-profile-save" type="submit">Save About</button></div></form>;
+  const updateDraft = (key: keyof AboutSectionRecord, value: string | number) => {
+    setDraft((current) => current ? { ...current, [key]: value } : current);
+  };
+  const saveSettings = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const response = await fetch('/api/admin/content', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'about', title: settings.title, intro: settings.intro, body: about?.body ?? '' }) });
+    const result = await response.json() as { error?: string; record?: AboutRecord };
+    if (!response.ok) setError(result.error ?? 'Page settings could not be saved.');
+    else { setSavedSettings(settings); setNotice('Page settings saved.'); }
+  };
+  const saveSection = async () => {
+    if (!draft) return;
+    const response = await fetch('/api/admin/content', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'about-section', id: draft.id, label: draft.label, heading: draft.heading, body: draft.body, mediaReference: draft.media_reference, mediaAlt: draft.media_alt, mediaPosition: draft.media_position, mediaShape: draft.media_shape, meta: draft.meta, sortOrder: draft.sort_order }) });
+    const result = await response.json() as { error?: string; record?: AboutSectionRecord };
+    if (!response.ok || !result.record) setError(result.error ?? 'Section could not be saved.');
+    else { setRecords((current) => current.map((item) => item.id === result.record?.id ? result.record as AboutSectionRecord : item)); setDraft(result.record); setNotice('Section saved.'); }
+  };
+  const createSection = async () => {
+    const response = await fetch('/api/admin/content', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'about-section', title: 'New section', label: 'New section', heading: '', body: '', mediaPosition: 'right', mediaShape: 'landscape', sortOrder: records.length }) });
+    const result = await response.json() as { record?: AboutSectionRecord; error?: string };
+    if (!response.ok || !result.record) setError(result.error ?? 'Section could not be created.');
+    else { setRecords((current) => [...current, result.record as AboutSectionRecord]); selectSection(result.record as AboutSectionRecord); setNotice('New section created.'); }
+  };
+  const deleteSection = async () => {
+    if (!draft?.id) return;
+    const response = await fetch('/api/admin/content', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'about-section', id: draft.id }) });
+    if (!response.ok) setError('Section could not be deleted.');
+    else { const next = records.filter((item) => item.id !== draft.id); setRecords(next); setDraft(next[0] ?? null); setSelectedId(next[0]?.id ?? null); setNotice('Section deleted.'); }
+  };
+  const uploadSectionImage = async (file: File) => {
+    if (!draft) return;
+    try { updateDraft('media_reference', await uploadMedia(file)); setNotice('Image uploaded. Save section to persist it.'); }
+    catch (uploadError) { setError(uploadError instanceof Error ? uploadError.message : 'The image could not be uploaded.'); }
+  };
+
+  return <div className="about-admin-editor">
+    <header className="about-admin-header"><div><span>Content management / 03</span><h2>About editor</h2><p>Manage the About page and its editorial sections.</p></div><a href="/about" target="_blank" rel="noreferrer">Preview page ↗</a></header>
+    <form className="about-admin-settings" onSubmit={saveSettings}><div><span>Page settings</span><p>These fields control the public About introduction.</p></div><label><span>Page title</span><input value={settings.title} onChange={(event) => setSettings({ ...settings, title: event.target.value })} /></label><label><span>Intro paragraph</span><textarea rows={3} value={settings.intro} onChange={(event) => setSettings({ ...settings, intro: event.target.value })} /></label><button className="admin-profile-save" type="submit" disabled={settings.title === savedSettings.title && settings.intro === savedSettings.intro}>Save settings</button></form>
+    <div className="about-admin-sections"><aside className="about-admin-browser"><div className="about-admin-browser-heading"><div><span>Repeatable content</span><h3>About sections</h3></div><button type="button" onClick={createSection}>+ New section</button></div>{records.map((section, index) => <button type="button" className={selectedId === section.id ? 'is-active' : ''} key={section.id} onClick={() => selectSection(section)}><strong>{String(index + 1).padStart(2, '0')}</strong><span>{section.heading || 'Untitled section'}</span><small>{section.media_shape} · {section.media_position}{section.media_reference ? ' · image' : ''}</small></button>)}{!records.length && <p className="admin-empty-state">No sections yet. Create the first one.</p>}</aside>
+      <section className="about-admin-section-editor"><div className="about-admin-editor-heading"><div><span>Selected record</span><h3>Edit section</h3></div>{draft && <strong>{String((records.findIndex((item) => item.id === draft.id) + 1)).padStart(2, '0')}</strong>}</div>{draft ? <div className="about-admin-fields"><label><span>Section label</span><input value={draft.label} onChange={(event) => updateDraft('label', event.target.value)} /></label><label><span>Heading</span><input value={draft.heading} onChange={(event) => updateDraft('heading', event.target.value)} /></label><label className="about-admin-body"><span>Body / paragraph</span><textarea rows={10} value={draft.body} onChange={(event) => updateDraft('body', event.target.value)} /></label><div className="about-admin-media"><div><span>Media</span><strong>{draft.media_reference ? 'Image attached' : 'No image attached'}</strong></div>{draft.media_reference && <div className={`admin-media-preview is-${draft.media_shape}`}><img src={draft.media_reference} alt={draft.media_alt} /></div>}<label className="admin-upload-button">Upload image<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadSectionImage(file); }} /></label><label><span>Image alt text</span><input value={draft.media_alt} onChange={(event) => updateDraft('media_alt', event.target.value)} /></label><label><span>Image position</span><select value={draft.media_position} onChange={(event) => updateDraft('media_position', event.target.value)}><option value="left">Left</option><option value="right">Right</option></select></label><label><span>Image format</span><select value={draft.media_shape} onChange={(event) => updateDraft('media_shape', event.target.value)}><option value="portrait">Portrait</option><option value="landscape">Landscape</option><option value="square">Square</option></select></label><label><span>Sort order</span><input type="number" value={draft.sort_order} onChange={(event) => updateDraft('sort_order', Number(event.target.value))} /></label></div><div className="about-admin-actions"><button type="button" className="admin-experience-delete" onClick={deleteSection}>Delete section</button><span className="admin-profile-notice">{notice}</span><button type="button" className="admin-profile-save" onClick={saveSection}>Save section</button></div></div> : <p className="admin-empty-state">Select a section or create a new one.</p>}</section>
+    </div><p className="admin-profile-error" role="alert">{error}</p>
+  </div>;
+}
+
+function AboutBasicsEditor({ about, sections }: { about: AboutRecord | null; sections: AboutSectionRecord[] }) {
+  const [intro, setIntro] = useState(about?.intro ?? '');
+  const [savedIntro, setSavedIntro] = useState(intro);
+  const [records, setRecords] = useState(sections);
+  const [savedRecords, setSavedRecords] = useState(sections);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [notice, setNotice] = useState('');
+  const [error, setError] = useState('');
+  const dirty = intro !== savedIntro || JSON.stringify(records) !== JSON.stringify(savedRecords);
+
+  const updateSection = (id: string, key: keyof AboutSectionRecord, value: string | number) => {
+    setRecords((current) => current.map((section) => section.id === id ? { ...section, [key]: value } : section));
+  };
+
+  const saveAbout = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (records.some((section) => !section.label.trim() || !section.heading.trim())) {
+      setError('Every section needs a label and heading.');
+      return;
+    }
+    const response = await fetch('/api/admin/content', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kind: 'about', intro, sections: records }),
+    });
+    const result = await response.json() as { error?: string; record?: AboutRecord };
+    if (!response.ok) setError(result.error ?? 'About introduction could not be saved.');
+    else { setSavedIntro(intro); setSavedRecords(records); setNotice('About saved. Public page updated.'); setError(''); }
+  };
+
+  const createSection = async () => {
+    const section: AboutSectionRecord = {
+      id: `new-${crypto.randomUUID()}`, about_id: 1, label: '', heading: '', body: '',
+      media_reference: null, media_alt: '', media_position: 'left', media_shape: 'portrait',
+      meta: '', sort_order: records.length, updated_at: '',
+    };
+    setRecords((current) => [...current, section]);
+    setExpandedId(section.id);
+    setError('');
+  };
+
+  const moveSection = (id: string, direction: -1 | 1) => {
+    setRecords((current) => {
+      const index = current.findIndex((section) => section.id === id);
+      const target = index + direction;
+      if (index < 0 || target < 0 || target >= current.length) return current;
+      const next = [...current];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next.map((section, order) => ({ ...section, sort_order: order }));
+    });
+  };
+
+  const removeSection = (id: string) => {
+    const section = records.find((item) => item.id === id);
+    if (section && !section.id.startsWith('new-') && !window.confirm('Delete this About section permanently?')) return;
+    setRecords((current) => current.filter((item) => item.id !== id).map((item, order) => ({ ...item, sort_order: order })));
+    setExpandedId(null);
+  };
+
+  const uploadSectionImage = async (id: string, file: File) => {
+    try {
+      const reference = await uploadMedia(file);
+      updateSection(id, 'media_reference', reference);
+      setNotice('Image uploaded. Save About to publish it.');
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : 'The image could not be uploaded.');
+    }
+  };
+
+  return (
+    <div className="about-basics-editor">
+      <header className="about-admin-header">
+        <div><span>Content management / 03</span><h2>About editor</h2><p>Manage the About Me page and its introduction.</p></div>
+        <a href="/about" target="_blank" rel="noreferrer">Preview page ↗</a>
+      </header>
+
+      <form id="about-settings-form" className="about-settings-panel" onSubmit={saveAbout}>
+        <div className="about-settings-copy"><span>Page settings</span><p>Public introduction shown at the top of About Me.</p></div>
+        <label><span>Intro paragraph</span><textarea rows={4} value={intro} onChange={(event) => setIntro(event.target.value)} /></label>
+      </form>
+
+      <div className="about-basic-sections">
+        <section className="about-basic-list">
+          <div className="about-basic-list-heading"><span>Content workspace</span><h3>About sections</h3></div>
+          {records.length ? records.map((section, index) => <article className="about-basic-accordion" key={section.id}>
+            <button type="button" className="about-basic-row" onClick={() => setExpandedId(expandedId === section.id ? null : section.id)}>
+              <strong>{String(index + 1).padStart(2, '0')}</strong><span>{section.heading || 'Untitled section'}</span><small>{section.media_shape} · {section.media_position}</small>
+            </button>
+            {expandedId === section.id && <div className="about-basic-expanded">
+              <div className="about-admin-fields">
+                <label><span>Section label</span><input value={section.label} onChange={(event) => updateSection(section.id, 'label', event.target.value)} /></label>
+                <label><span>Heading</span><input value={section.heading} onChange={(event) => updateSection(section.id, 'heading', event.target.value)} /></label>
+                <label className="about-admin-body"><span>Body</span><textarea rows={8} value={section.body} onChange={(event) => updateSection(section.id, 'body', event.target.value)} /></label>
+                <label><span>Meta label</span><input value={section.meta} onChange={(event) => updateSection(section.id, 'meta', event.target.value)} /></label>
+                <div className="about-admin-media">
+                  {section.media_reference && <div className={`admin-media-preview is-${section.media_shape}`}><img src={section.media_reference} alt={section.media_alt} /></div>}
+                  <label className="admin-upload-button">Upload / replace image<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadSectionImage(section.id, file); }} /></label>
+                  {section.media_reference && <button type="button" className="admin-profile-reset" onClick={() => updateSection(section.id, 'media_reference', '')}>Remove image</button>}
+                  <label><span>Image alt text</span><input value={section.media_alt} onChange={(event) => updateSection(section.id, 'media_alt', event.target.value)} /></label>
+                  <label><span>Image position</span><select value={section.media_position} onChange={(event) => updateSection(section.id, 'media_position', event.target.value)}><option value="left">Left</option><option value="right">Right</option></select></label>
+                  <label><span>Image format</span><select value={section.media_shape} onChange={(event) => updateSection(section.id, 'media_shape', event.target.value)}><option value="portrait">Portrait</option><option value="landscape">Landscape</option><option value="square">Square</option></select></label>
+                </div>
+              </div>
+              <div className="about-basic-expanded-actions">
+                <button type="button" onClick={() => moveSection(section.id, -1)} disabled={index === 0}>↑ Move up</button>
+                <button type="button" onClick={() => moveSection(section.id, 1)} disabled={index === records.length - 1}>↓ Move down</button>
+                <button type="button" className="admin-experience-delete" onClick={() => removeSection(section.id)}>Delete section</button>
+              </div>
+            </div>}
+          </article>) : <div className="about-basic-empty"><strong>No About sections yet</strong><p>Create sections to build the public About page.</p></div>}
+          <button className="about-basic-add" type="button" onClick={createSection}>+ Add new section</button>
+        </section>
+      </div>
+      <div className="admin-profile-actions about-settings-actions">
+        <div><p className="admin-profile-error" role="alert">{error}</p><p className="admin-profile-notice" role="status">{notice}</p>{!error && !notice && <small>{dirty ? 'Unsaved changes' : 'No unsaved changes'}</small>}</div>
+        <button className="admin-profile-reset" type="button" onClick={() => { setIntro(savedIntro); setRecords(savedRecords); setExpandedId(null); setError(''); setNotice(''); }} disabled={!dirty}>Reset changes</button>
+        <button className="admin-profile-save" form="about-settings-form" type="submit" disabled={!dirty}><span>Save About</span><span aria-hidden="true">→</span></button>
+      </div>
+    </div>
+  );
 }
 
 function ContactEditor({ contact }: { contact: PublicContactRecord | null }) {
@@ -770,17 +1030,13 @@ function ContactEditor({ contact }: { contact: PublicContactRecord | null }) {
 
 export default function AdminWorkspace({
   experiences,
-  projects,
-  videos,
-  journeyThreads,
-  journeyUpdates,
-  projectUpdates,
-  journeyCount,
+  threads,
+  threadEntries,
+  threadCount,
   about,
+  aboutSections,
   publicContact,
   experienceCount,
-  projectCount,
-  videoCount,
   profile,
   privateContact,
 }: AdminWorkspaceProps) {
@@ -849,24 +1105,24 @@ export default function AdminWorkspace({
 
               <div className="admin-quick-metrics">
                 <article>
-                  <span>Experience</span>
+                  <span>Career</span>
                   <strong>{String(experienceCount).padStart(2, '0')}</strong>
                   <small>Database records</small>
                 </article>
                 <article>
+                  <span>Threads</span>
+                  <strong>{String(threadCount).padStart(2, '0')}</strong>
+                  <small>Journey + projects</small>
+                </article>
+                <article>
                   <span>Journey</span>
-                  <strong>{String(journeyCount).padStart(2, '0')}</strong>
-                  <small>Threads</small>
+                  <strong>{String(threads.filter((thread) => thread.destination === 'journey').length).padStart(2, '0')}</strong>
+                  <small>Published content</small>
                 </article>
                 <article>
                   <span>Projects</span>
-                  <strong>{String(projectCount).padStart(2, '0')}</strong>
-                  <small>Database records</small>
-                </article>
-                <article>
-                  <span>Videos</span>
-                  <strong>{String(videoCount).padStart(2, '0')}</strong>
-                  <small>Database records</small>
+                  <strong>{String(threads.filter((thread) => thread.destination === 'projects').length).padStart(2, '0')}</strong>
+                  <small>Published content</small>
                 </article>
               </div>
 
@@ -878,35 +1134,25 @@ export default function AdminWorkspace({
             </div>
           )}
 
-          {activePanel === 'home' && (
-            <div className="admin-module-window"><div className="admin-module-heading"><div><span>Homepage module / 02</span><h2>Home</h2></div><strong>01</strong></div><ProfileEditor profile={profile} privateContact={privateContact} /></div>
+          {activePanel === 'profile' && (
+            <div className="admin-module-window"><div className="admin-module-heading"><div><span>Public identity / 02</span><h2>Profile</h2></div><strong>01</strong></div><ProfileEditor profile={profile} privateContact={privateContact} /></div>
           )}
 
           {activePanel === 'about' && (
-            <div className="admin-module-window"><div className="admin-module-heading"><div><span>Personal module / 03</span><h2>About</h2></div><strong>01</strong></div><AboutEditor about={about} /></div>
+            <div className="admin-module-window admin-about-window"><AboutBasicsEditor about={about} sections={aboutSections} /></div>
           )}
 
-          {activePanel === 'journey' && (
-            <div className="admin-module-window"><div className="admin-module-heading"><div><span>Personal threads / 04</span><h2>Journey</h2></div><strong>{String(journeyCount).padStart(2, '0')}</strong></div><ContentManager kind="journey-thread" records={journeyThreads} updates={journeyUpdates} updateParentKey="thread_id" /></div>
+          {activePanel === 'threads' && (
+            <div className="admin-module-window"><div className="admin-module-heading"><div><span>Unified content / 04</span><h2>Threads</h2></div><strong>{String(threadCount).padStart(2, '0')}</strong></div><ContentManager kind="thread" records={threads} updates={threadEntries} /></div>
           )}
 
-          {activePanel === 'experiences' && (
+          {activePanel === 'career' && (
             <div className="admin-module-window admin-experience-window">
               <div className="admin-module-heading">
-                <div><span>Career module / 06</span><h2>Experience</h2></div>
+                <div><span>Career module / 05</span><h2>Career</h2></div>
                 <strong>{String(experienceCount).padStart(2, '0')}</strong>
               </div>
               <ExperienceEditor experiences={experiences} />
-            </div>
-          )}
-
-          {activePanel === 'projects' && (
-            <div className="admin-module-window">
-              <div className="admin-module-heading">
-                <div><span>Technical module / 05</span><h2>Projects</h2></div>
-                <strong>{String(projectCount).padStart(2, '0')}</strong>
-              </div>
-              <ContentManager kind="project" records={projects} updates={projectUpdates} updateParentKey="project_id" />
             </div>
           )}
 
@@ -914,10 +1160,10 @@ export default function AdminWorkspace({
             <div className="admin-module-window"><div className="admin-module-heading"><div><span>Public channel / 07</span><h2>Contact</h2></div><strong>01</strong></div><ContactEditor contact={publicContact} /></div>
           )}
 
-          {activePanel === 'account' && (
+          {activePanel === 'security' && (
             <div className="admin-module-window">
               <div className="admin-module-heading">
-                <div><span>Security module / 08</span><h2>Security / Account</h2></div>
+                <div><span>Security module / 07</span><h2>Security</h2></div>
                 <strong>01</strong>
               </div>
               <ProfileEditor profile={profile} privateContact={privateContact} />
