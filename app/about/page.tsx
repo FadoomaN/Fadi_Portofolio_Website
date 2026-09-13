@@ -20,7 +20,6 @@ export default async function AboutPage() {
   return (
     <>
       <SiteHeader revealImmediately activeHref="/about" />
-      <CircuitDivider />
 
       <main className="about-canvas">
         <div className="about-frame">
@@ -29,6 +28,7 @@ export default async function AboutPage() {
             <h1 id="about-title">{data?.title ?? 'ABOUT'}</h1>
             <p>{intro}</p>
           </header>
+          <CircuitDivider />
 
           <div className="about-story">
             <section className="about-story-section" aria-labelledby="about-origin-title">

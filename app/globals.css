@@ -1777,7 +1777,7 @@ body {
 
 .placeholder-canvas {
   min-height: 100svh;
-  padding: 5.25rem clamp(1.25rem, 4vw, 4rem) 3rem;
+  padding: 0 clamp(1.25rem, 4vw, 4rem) 3rem;
   background:
     linear-gradient(color-mix(in srgb, var(--panel-border) 16%, transparent) 1px, transparent 1px),
     linear-gradient(90deg, color-mix(in srgb, var(--panel-border) 16%, transparent) 1px, transparent 1px),
@@ -1846,7 +1846,7 @@ body {
 
 .about-canvas {
   min-height: 100svh;
-  padding: 0 clamp(1.25rem, 6vw, 7rem) 4rem;
+  padding: 5.25rem clamp(1.25rem, 6vw, 7rem) 4rem;
   background:
     linear-gradient(color-mix(in srgb, var(--panel-border) 14%, transparent) 1px, transparent 1px),
     linear-gradient(90deg, color-mix(in srgb, var(--panel-border) 14%, transparent) 1px, transparent 1px),
@@ -1855,16 +1855,23 @@ body {
 }
 
 .about-frame {
+  --about-frame-pad: clamp(1.25rem, 3vw, 3rem);
   width: min(100%, 84rem);
   margin-inline: auto;
   padding-top: 1px;
-  padding-inline: clamp(1.25rem, 3vw, 3rem);
+  padding-inline: var(--about-frame-pad);
   border-inline: 1px solid var(--panel-border);
+  box-sizing: border-box;
+}
+
+.about-frame > .circuit-divider-page {
+  width: calc(100% + var(--about-frame-pad) + var(--about-frame-pad));
+  margin-left: calc(var(--about-frame-pad) * -1);
 }
 
 .about-intro {
   width: min(100%, 78rem);
-  margin: clamp(2rem, 4vw, 3.5rem) auto clamp(5rem, 11vw, 10rem);
+  margin: clamp(2rem, 4vw, 3.5rem) auto clamp(2.5rem, 5vw, 4rem);
 }
 
 .about-kicker,
@@ -1892,7 +1899,7 @@ body {
 .about-intro h1 {
   margin: 1.5rem 0 1.25rem;
   color: var(--ink);
-  font: 900 clamp(4.5rem, 15vw, 12rem)/0.82 'Arial Black', Arial, Helvetica, sans-serif;
+  font: 900 clamp(4rem, 9vw, 7rem)/0.82 'Arial Black', Arial, Helvetica, sans-serif;
   letter-spacing: -0.08em;
 }
 
@@ -1913,11 +1920,15 @@ body {
   display: grid;
   min-width: 0;
   grid-template-columns: minmax(16rem, 0.9fr) minmax(0, 1fr);
-  min-height: 34rem;
+  min-height: 0;
   align-items: center;
   gap: clamp(3rem, 9vw, 10rem);
-  padding-block: clamp(3rem, 8vw, 8rem);
+  padding-block: clamp(3rem, 5vw, 5rem);
   border-top: 1px solid var(--panel-border);
+}
+
+.about-story-section:first-child {
+  border-top: 0;
 }
 
 .about-story-section-reverse {
@@ -2038,7 +2049,7 @@ body {
 
 @media (max-width: 56rem) {
   .about-canvas {
-    padding-inline: clamp(1.25rem, 5vw, 3rem);
+    padding: 4rem clamp(1.25rem, 5vw, 3rem) 4rem;
   }
 
   .about-story-section,
@@ -2046,28 +2057,44 @@ body {
     grid-template-columns: minmax(0, 1fr);
     min-height: 0;
     gap: 2.5rem;
+    padding-block: clamp(3rem, 5vw, 4rem);
   }
 
-  .about-story-section-reverse .about-story-copy {
+  .about-story-copy {
     order: 1;
   }
 
-  .about-story-section-reverse .about-visual {
+  .about-visual {
     order: 2;
+    min-height: 0;
   }
 
-  .about-visual-portrait,
-  .about-visual-square {
-    width: min(100%, 26rem);
+  .about-visual-portrait {
+    width: min(70%, 19rem);
+    max-width: 19rem;
+    margin-inline: auto;
+    aspect-ratio: 4 / 5;
   }
 
   .about-visual-landscape {
-    width: 100%;
+    width: min(100%, 32rem);
+    margin-inline: auto;
     min-height: 0;
+    aspect-ratio: 16 / 10;
+  }
+
+  .about-visual-square {
+    width: min(75%, 20rem);
+    margin-inline: auto;
+    aspect-ratio: 1;
   }
 }
 
-@media (max-width: 36rem) {
+@media (max-width: 37.5rem) {
+  .about-canvas {
+    overflow-x: clip;
+  }
+
   .about-intro {
     margin-top: 2rem;
   }
@@ -2086,12 +2113,57 @@ body {
     font-size: clamp(4rem, 22vw, 6.5rem);
   }
 
-  .about-story-section {
-    padding-block: 4rem;
+  .about-story-section,
+  .about-story-section-reverse {
+    gap: 2rem;
+    padding-block: 2.5rem;
+  }
+
+  .about-story-copy {
+    order: 1;
   }
 
   .about-visual {
-    min-height: 20rem;
+    order: 2;
+    min-height: 0;
+  }
+
+  .about-story-copy h2 {
+    max-width: 10ch;
+    margin-block: 1rem 1.25rem;
+    font-size: clamp(2.2rem, 11vw, 2.8rem);
+  }
+
+  .about-story-copy > p:not(.about-section-label) {
+    font-size: clamp(1rem, 4.5vw, 1.1rem);
+    line-height: 1.7;
+  }
+
+  .about-visual-portrait {
+    width: min(72%, 16rem);
+    max-width: 16rem;
+    max-height: 20rem;
+    aspect-ratio: 4 / 5;
+  }
+
+  .about-visual-landscape {
+    width: 100%;
+    max-height: 15rem;
+    aspect-ratio: 16 / 10;
+  }
+
+  .about-visual-square {
+    width: min(78%, 17rem);
+    max-width: 17rem;
+    aspect-ratio: 1;
+  }
+
+  .about-visual > span {
+    opacity: 0.7;
+  }
+
+  .about-visual > i {
+    opacity: 0.45;
   }
 }
 
@@ -3456,7 +3528,7 @@ html[data-home-intro='seen'] .life-cpu-amp-signal-out {
 
 .experience-index-canvas {
   min-height: 100svh;
-  padding-top: 0;
+  padding-top: 5.25rem;
   background:
     radial-gradient(circle at 76% 18%, color-mix(in srgb, var(--current) 8%, transparent), transparent 26rem),
     var(--paper);
@@ -3467,7 +3539,7 @@ html[data-home-intro='seen'] .life-cpu-amp-signal-out {
   top: auto;
   left: auto;
   width: 100%;
-  margin-top: 5.25rem;
+  margin-top: 0;
   transform: none;
 }
 
@@ -5524,7 +5596,7 @@ html[data-home-intro='seen'] .life-cpu-amp-signal-out {
   }
 
   .experience-index-canvas {
-    padding-top: 4.85rem;
+    padding-top: 4rem;
   }
 
   .experience-index-shell {
@@ -5886,12 +5958,14 @@ html[data-home-intro='seen'] .life-cpu-amp-signal-out {
 
 .circuit-divider-page {
   width: 100%;
-  margin: 5.25rem 0 0;
+  margin: 0;
+  opacity: 1;
+  animation: none;
 }
 
 @media (max-width: 48rem) {
   .circuit-divider-page {
-    margin-top: 4rem;
+    margin-top: 0;
   }
 }
 

@@ -23,7 +23,6 @@ export default async function ExperiencesPage() {
   return (
     <>
       <SiteHeader revealImmediately activeHref="/experiences" />
-      <CircuitDivider />
 
       <main className="experience-index-canvas">
         <section className="experience-index-shell" aria-labelledby="experiences-title">
@@ -35,6 +34,7 @@ export default async function ExperiencesPage() {
             </p>
             <h1 id="experiences-title">EXPERIENCES</h1>
           </header>
+          <CircuitDivider />
 
           <ExperienceTimeline experiences={experiences} />
         </section>
