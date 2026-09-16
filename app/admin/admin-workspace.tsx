@@ -1,40 +1,11 @@
 'use client';
 
-import { ChangeEvent, FormEvent, useMemo, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import ContentManager from './content-manager';
+import type { Thread } from '@/lib/content';
 
 type PanelId = 'overview' | 'profile' | 'about' | 'threads' | 'career' | 'contact' | 'security';
-
-type ContentRecord = {
-  id: string;
-  title: string;
-  status: string;
-  updated_at: string;
-  destination: 'journey' | 'projects';
-  category?: string;
-  slug?: string;
-  description?: string;
-  summary?: string;
-  technical_description?: string;
-  cover_media_reference?: string | null;
-  cover_image_url?: string | null;
-  github_url?: string | null;
-  live_url?: string | null;
-  tags?: string[];
-  featured?: boolean;
-  sort_order?: number;
-};
-
-type ThreadEntry = {
-  id: string;
-  thread_id: string;
-  title: string;
-  published_on: string;
-  content: string;
-  status: string;
-  sort_order: number;
-  updated_at: string;
-};
 
 type AboutRecord = {
   id: number;
@@ -105,9 +76,10 @@ type ExperienceRecord = {
 
 type AdminWorkspaceProps = {
   experiences: ExperienceRecord[];
-  threads: ContentRecord[];
-  threadEntries: ThreadEntry[];
+  threads: Thread[];
+  categories: {id:string;name:string}[];
   threadCount: number;
+  loadError?: string;
   about: AboutRecord | null;
   aboutSections: AboutSectionRecord[];
   publicContact: PublicContactRecord | null;
@@ -149,7 +121,7 @@ const menuItems: Array<{ id: PanelId; index: string; label: string }> = [
   { id: 'overview', index: '01', label: 'Overview' },
   { id: 'profile', index: '02', label: 'Profile' },
   { id: 'about', index: '03', label: 'About' },
-  { id: 'threads', index: '04', label: 'Threads' },
+  { id: 'threads', index: '04', label: 'Journey' },
   { id: 'career', index: '05', label: 'Career' },
   { id: 'contact', index: '06', label: 'Contact' },
   { id: 'security', index: '07', label: 'Security' },
@@ -196,158 +168,6 @@ async function uploadMedia(file: File) {
   return result.url;
 }
 
-function RecordList({ records, emptyLabel }: { records: ContentRecord[]; emptyLabel: string }) {
-  if (!records.length) {
-    return (
-      <div className="admin-empty-state">
-        <span>00</span>
-        <strong>{emptyLabel}</strong>
-        <p>This module is connected and ready for its editor.</p>
-      </div>
-    );
-  }
-
-  function ContentManager({
-    kind,
-    records,
-    updates,
-  }: {
-    kind: 'thread';
-    records: ContentRecord[];
-    updates: ThreadEntry[];
-  }) {
-    const router = useRouter();
-    const [selected, setSelected] = useState<ContentRecord | null>(records[0] ?? null);
-    const [form, setForm] = useState(() => records[0] ?? {
-      id: '', title: '', slug: '', destination: 'journey', category: '', status: 'draft', updated_at: '', description: '', summary: '',
-      technical_description: '', cover_media_reference: '', cover_image_url: '', github_url: '',
-      live_url: '', tags: [], featured: false, sort_order: 0,
-    });
-    const [notice, setNotice] = useState('');
-    const [error, setError] = useState('');
-    const [selectedUpdate, setSelectedUpdate] = useState<ThreadEntry | null>(null);
-    const [filter, setFilter] = useState('all');
-    const isProject = form.destination === 'projects';
-    const relatedUpdates = selected ? updates.filter((update) => update.thread_id === selected.id) : [];
-    const visibleRecords = records.filter((record) => filter === 'all' || record.destination === filter || record.status === filter);
-
-    const edit = (record: ContentRecord) => {
-      setSelected(record);
-      setForm(record);
-      setError('');
-      setNotice('');
-    };
-    const change = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-      const value = event.target.type === 'checkbox' ? (event.target as HTMLInputElement).checked : event.target.value;
-      setForm((current) => ({ ...current, [event.target.name]: value }));
-    };
-    const save = async (event: FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
-      setError('');
-      setNotice('');
-      const response = await fetch('/api/admin/content', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, kind: 'thread', technicalDescription: form.technical_description, coverMediaReference: form.cover_media_reference, githubUrl: form.github_url, liveUrl: form.live_url }),
-      });
-      const result = await response.json() as { error?: string };
-      if (!response.ok) setError(result.error ?? 'The content could not be saved.');
-      else { setNotice('Thread saved.'); router.refresh(); }
-    };
-    const remove = async () => {
-      if (!selected?.id) return;
-      const response = await fetch('/api/admin/content', {
-        method: 'DELETE', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kind: 'thread', id: selected.id }),
-      });
-      if (!response.ok) setError('The record could not be deleted.');
-      else { setSelected(null); setNotice('Thread deleted.'); router.refresh(); }
-    };
-    const addUpdate = async () => {
-      if (!selected?.id) return;
-      const response = await fetch('/api/admin/content', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kind: 'thread-entry', parentId: selected.id, title: 'Untitled entry', date: new Date().toISOString().slice(0, 10), content: '', status: 'draft', sortOrder: relatedUpdates.length }),
-      });
-      if (!response.ok) setError('The update could not be created.');
-      else { setNotice('Entry created.'); router.refresh(); }
-    };
-    const saveUpdate = async (formElement: HTMLDivElement) => {
-      if (!selectedUpdate) return;
-      const formData = new FormData();
-      formElement.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>('[name]').forEach((field) => {
-        formData.set(field.name, field.value);
-      });
-      const response = await fetch('/api/admin/content', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          kind: 'thread-entry', id: selectedUpdate.id, parentId: selected.id,
-          title: formData.get('title'), date: formData.get('date'), content: formData.get('content'),
-          mediaReference: formData.get('mediaReference'), status: formData.get('status'), sortOrder: Number(formData.get('sortOrder')),
-        }),
-      });
-      if (response.ok) { setNotice('Entry saved.'); router.refresh(); } else setNotice('The entry could not be saved.');
-    };
-    const deleteUpdate = async () => {
-      if (!selectedUpdate) return;
-      const response = await fetch('/api/admin/content', {
-        method: 'DELETE', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kind: 'thread-entry', id: selectedUpdate.id }),
-      });
-      if (response.ok) { setNotice('Entry deleted.'); router.refresh(); } else setNotice('The entry could not be deleted.');
-    };
-
-    return (
-      <div className="admin-content-manager">
-        <aside className="admin-experience-browser" aria-label="Thread browser">
-          <div className="admin-experience-toolbar"><span>{String(visibleRecords.length).padStart(2, '0')} records</span><button type="button" onClick={() => { setSelected(null); setForm({ ...form, id: '', title: '', slug: '' }); }}>+ New</button></div>
-          <label className="admin-profile-field"><span>Filter</span><select value={filter} onChange={(event) => setFilter(event.target.value)}><option value="all">All</option><option value="journey">Journey</option><option value="projects">Projects</option><option value="draft">Draft</option><option value="published">Published</option><option value="archived">Archived</option></select></label>
-          <div className="admin-experience-list">
-            {visibleRecords.map((record) => <button className={selected?.id === record.id ? 'is-active' : ''} type="button" onClick={() => edit(record)} key={record.id}><span>{record.destination.toUpperCase()} / {record.status}</span><strong>{record.title}</strong><small>{record.category || record.slug}</small></button>)}
-            {!visibleRecords.length && <p className="admin-experience-list-empty">No records yet.</p>}
-          </div>
-        </aside>
-        <form className="admin-profile-form" onSubmit={save}>
-           <fieldset className="admin-profile-section">
-            <legend><span>Chronological thread</span><strong>{selected ? 'EDIT' : 'NEW'}</strong></legend>
-            <div className="admin-profile-fields">
-              <label className="admin-profile-field"><span>Title</span><input name="title" value={form.title ?? ''} onChange={change} required /></label>
-              <label className="admin-profile-field"><span>Slug</span><input name="slug" value={form.slug ?? ''} onChange={change} required /></label>
-              <label className="admin-profile-field"><span>Publish to</span><select name="destination" value={form.destination} onChange={change} required><option value="journey">Journey</option><option value="projects">Projects</option></select></label>
-              <label className="admin-profile-field"><span>Category</span><input name="category" value={form.category ?? ''} onChange={change} /></label>
-              <label className="admin-profile-field"><span>Status</span><select name="status" value={form.status} onChange={change}><option value="draft">Draft</option><option value="published">Published</option><option value="archived">Archived</option></select></label>
-              <label className="admin-profile-field"><span>Sort order</span><input name="sort_order" type="number" value={form.sort_order ?? 0} onChange={change} /></label>
-              <label className="admin-profile-field"><span>{isProject ? 'Summary' : 'Description'}</span><textarea name={isProject ? 'summary' : 'description'} value={(isProject ? form.summary : form.description) ?? ''} onChange={change} rows={4} /></label>
-              {isProject && <label className="admin-profile-field"><span>Technical description</span><textarea name="technical_description" value={form.technical_description ?? ''} onChange={change} rows={4} /></label>}
-              <label className="admin-profile-field"><span>Cover media reference</span><input name={isProject ? 'cover_image_url' : 'cover_media_reference'} value={(isProject ? form.cover_image_url : form.cover_media_reference) ?? ''} onChange={change} /></label>
-              {isProject && <><label className="admin-profile-field"><span>Technologies / tags</span><input name="tags" value={(form.tags ?? []).join(', ')} onChange={(event) => setForm((current) => ({ ...current, tags: event.target.value.split(',').map((tag) => tag.trim()).filter(Boolean) }))} /></label><label className="admin-profile-field"><span>GitHub URL</span><input name="github_url" value={form.github_url ?? ''} onChange={change} /></label><label className="admin-profile-field"><span>Live/demo URL</span><input name="live_url" value={form.live_url ?? ''} onChange={change} /></label></>}
-              <label className="admin-profile-field"><span>Featured</span><input name="featured" type="checkbox" checked={form.featured === true} onChange={change} /></label>
-            </div>
-          </fieldset>
-          {selected && <fieldset className="admin-profile-section"><legend><span>Entries / updates</span><button type="button" onClick={addUpdate}>+ Add entry</button></legend>{relatedUpdates.length ? relatedUpdates.map((update) => <button className="admin-record-row" type="button" key={update.id} onClick={() => setSelectedUpdate(update)}><strong>{update.title}</strong><span>{update.status}</span><time>{update.published_on}</time></button>) : <p className="admin-empty-state">No entries yet.</p>}</fieldset>}
-          {selectedUpdate && <div className="admin-profile-section"><div className="admin-profile-fields"><label className="admin-profile-field"><span>Entry title</span><input name="title" defaultValue={selectedUpdate.title} /></label><label className="admin-profile-field"><span>Date</span><input name="date" type="date" defaultValue={selectedUpdate.published_on} /></label><label className="admin-profile-field"><span>Status</span><select name="status" defaultValue={selectedUpdate.status}><option value="draft">Draft</option><option value="published">Published</option><option value="archived">Archived</option></select></label><label className="admin-profile-field"><span>Order</span><input name="sortOrder" type="number" defaultValue={selectedUpdate.sort_order} /></label><label className="admin-profile-field"><span>Text / content</span><textarea name="content" rows={5} defaultValue={selectedUpdate.content} /></label></div><button className="admin-profile-save" type="button" onClick={(event) => saveUpdate(event.currentTarget.parentElement as HTMLDivElement)}>Save entry</button><button className="admin-experience-delete" type="button" onClick={deleteUpdate}>Delete entry</button></div>}
-          <div className="admin-profile-actions"><div><p className="admin-profile-error" role="alert">{error}</p><p className="admin-profile-notice" role="status">{notice}</p></div>{selected && <button type="button" className="admin-experience-delete" onClick={remove}>Delete</button>}<button className="admin-profile-save" type="submit">Save</button></div>
-        </form>
-      </div>
-    );
-  }
-
-  return (
-    <div className="admin-record-list">
-      <div className="admin-record-row admin-record-head">
-        <span>Title</span>
-        <span>Status</span>
-        <span>Updated</span>
-      </div>
-      {records.map((record) => (
-        <div className="admin-record-row" key={record.id}>
-          <strong>{record.title}</strong>
-          <span>{record.status}</span>
-          <time dateTime={record.updated_at}>{formatDate(record.updated_at)}</time>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 function experienceToForm(record: ExperienceRecord): ExperienceFormState {
   return {
@@ -1031,8 +851,9 @@ function ContactEditor({ contact }: { contact: PublicContactRecord | null }) {
 export default function AdminWorkspace({
   experiences,
   threads,
-  threadEntries,
+  categories,
   threadCount,
+  loadError,
   about,
   aboutSections,
   publicContact,
@@ -1041,6 +862,12 @@ export default function AdminWorkspace({
   privateContact,
 }: AdminWorkspaceProps) {
   const [activePanel, setActivePanel] = useState<PanelId>('overview');
+  const [hasUnsavedContent, setHasUnsavedContent] = useState(false);
+  useEffect(() => {
+    const listener = (event: Event) => setHasUnsavedContent(Boolean((event as CustomEvent).detail));
+    window.addEventListener('admin-dirty', listener);
+    return () => window.removeEventListener('admin-dirty', listener);
+  }, []);
   const activeItem = useMemo(
     () => menuItems.find((item) => item.id === activePanel) ?? menuItems[0],
     [activePanel],
@@ -1064,7 +891,7 @@ export default function AdminWorkspace({
               type="button"
               aria-current={activePanel === item.id ? 'page' : undefined}
               aria-label={`Open ${item.label} window`}
-              onClick={() => setActivePanel(item.id)}
+              onClick={() => { if (item.id === activePanel || !hasUnsavedContent || window.confirm('Discard unsaved content changes?')) setActivePanel(item.id); }}
               key={item.id}
             >
               <span>{item.index}</span>
@@ -1093,6 +920,7 @@ export default function AdminWorkspace({
         </header>
 
         <div className="admin-window-view" key={activePanel}>
+          {loadError && <p role="alert" className="admin-profile-error">{loadError}</p>}
           {activePanel === 'overview' && (
             <div className="admin-overview-window">
               <div className="admin-overview-heading">
@@ -1112,22 +940,22 @@ export default function AdminWorkspace({
                 <article>
                   <span>Threads</span>
                   <strong>{String(threadCount).padStart(2, '0')}</strong>
-                  <small>Journey + projects</small>
+                  <small>Journey threads</small>
                 </article>
                 <article>
-                  <span>Journey</span>
-                  <strong>{String(threads.filter((thread) => thread.destination === 'journey').length).padStart(2, '0')}</strong>
-                  <small>Published content</small>
+                  <span>Published</span>
+                  <strong>{String(threads.filter((thread) => thread.status === 'published').length).padStart(2, '0')}</strong>
+                  <small>Visible Journey threads</small>
                 </article>
                 <article>
-                  <span>Projects</span>
-                  <strong>{String(threads.filter((thread) => thread.destination === 'projects').length).padStart(2, '0')}</strong>
-                  <small>Published content</small>
+                  <span>Drafts</span>
+                  <strong>{String(threads.filter((thread) => thread.status === 'draft').length).padStart(2, '0')}</strong>
+                  <small>Journey threads in progress</small>
                 </article>
               </div>
 
               <div className="admin-system-strip">
-                <span><i /> Supabase connected</span>
+                <span><i /> {loadError ? 'Connection needs attention' : 'Supabase connected'}</span>
                 <span>RLS active</span>
                 <span>Session encrypted</span>
               </div>
@@ -1143,7 +971,7 @@ export default function AdminWorkspace({
           )}
 
           {activePanel === 'threads' && (
-            <div className="admin-module-window"><div className="admin-module-heading"><div><span>Unified content / 04</span><h2>Threads</h2></div><strong>{String(threadCount).padStart(2, '0')}</strong></div><ContentManager kind="thread" records={threads} updates={threadEntries} /></div>
+            <div className="admin-module-window admin-journey-window"><ContentManager initialThreads={threads} initialCategories={categories} /></div>
           )}
 
           {activePanel === 'career' && (

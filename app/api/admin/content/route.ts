@@ -42,6 +42,8 @@ export async function POST(request: NextRequest) {
   if (id && !UUID.test(id)) return NextResponse.json({ error: 'The selected record is invalid.' }, { status: 400 });
   const status = text(body.status) || 'draft';
   if (!STATUSES.has(status)) return NextResponse.json({ error: 'Choose a valid status.' }, { status: 400 });
+  const sortOrder = Number(body.sortOrder ?? 0);
+  if (!Number.isInteger(sortOrder)) return NextResponse.json({ error: 'Sort order must be a whole number.' }, { status: 400 });
 
   if (kind === 'about') {
     const record = {
@@ -133,8 +135,6 @@ export async function POST(request: NextRequest) {
 
   const title = text(body.title);
   if (!title) return NextResponse.json({ error: 'A title is required.' }, { status: 400 });
-  const sortOrder = Number(body.sortOrder ?? 0);
-  if (!Number.isInteger(sortOrder)) return NextResponse.json({ error: 'Sort order must be a whole number.' }, { status: 400 });
 
   let table: string;
   let record: Record<string, unknown>;

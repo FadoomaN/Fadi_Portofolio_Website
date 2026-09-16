@@ -1,8 +1,11 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import SiteHeader from '../site-header';
 import CircuitDivider from '../circuit-divider';
-import { journeyThreads } from './thread-data';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+import SearchableCards from './searchable-cards';
+import './feedback.css';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Journey — Fadi Al Hazim',
@@ -10,6 +13,14 @@ export const metadata: Metadata = {
 };
 
 export default async function JourneyPage() {
+  const db = await createServerSupabaseClient();
+  const [{ data: threads, error }, { data: childRows, error: childError }] = await Promise.all([
+    db.from('threads').select('id,slug,title,category,description,cover_media_reference,cover_position_x,cover_position_y')
+      .eq('destination','journey').eq('status','published').order('featured',{ascending:false}).order('sort_order').order('id'),
+    db.from('thread_subthreads').select('thread_id').eq('status','published'),
+  ]);
+  const childCounts = new Map<string,number>();
+  for (const row of childRows ?? []) childCounts.set(row.thread_id,(childCounts.get(row.thread_id)??0)+1);
   return (
     <>
       <SiteHeader revealImmediately activeHref="/journey" />
@@ -26,24 +37,8 @@ export default async function JourneyPage() {
               <span>Personal archive / 03</span>
               <h2 id="threads-title">THREADS</h2>
             </div>
-            <div className="journey-thread-list">
-              {journeyThreads.map((thread) => (
-                <Link className="journey-thread" href={`/journey/${thread.slug}`} key={thread.slug}>
-                  <div className="journey-thread-thumbnail" aria-hidden="true">
-                    <span>{thread.visual}</span>
-                    <strong>{thread.title}</strong>
-                    <i />
-                  </div>
-                  <div className="journey-thread-copy">
-                    <span className="journey-thread-label">{thread.number} / THREAD</span>
-                    <h3>{thread.title}</h3>
-                    <p>{thread.description}</p>
-                    <small>{String(thread.subthreads).padStart(2, '0')} SUBTHREADS</small>
-                  </div>
-                  <span className="journey-thread-view" aria-hidden="true">VIEW THREAD ↗</span>
-                </Link>
-              ))}
-            </div>
+            {!error && !childError && <SearchableCards kind="threads" threads={threads ?? []} childCounts={Object.fromEntries(childCounts)} />}
+            {(error || childError) && <p role="alert">Journey is temporarily unavailable. Please try again shortly.</p>}
           </section>
         </section>
       </main>
