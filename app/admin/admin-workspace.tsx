@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ContentManager from './content-manager';
 import type { Thread } from '@/lib/content';
@@ -121,7 +121,7 @@ const menuItems: Array<{ id: PanelId; index: string; label: string }> = [
   { id: 'overview', index: '01', label: 'Overview' },
   { id: 'profile', index: '02', label: 'Profile' },
   { id: 'about', index: '03', label: 'About' },
-  { id: 'threads', index: '04', label: 'Journey' },
+  { id: 'threads', index: '04', label: 'Threads' },
   { id: 'career', index: '05', label: 'Career' },
   { id: 'contact', index: '06', label: 'Contact' },
   { id: 'security', index: '07', label: 'Security' },
@@ -862,6 +862,8 @@ export default function AdminWorkspace({
   privateContact,
 }: AdminWorkspaceProps) {
   const [activePanel, setActivePanel] = useState<PanelId>('overview');
+  const [compactMenuOpen, setCompactMenuOpen] = useState(false);
+  const compactToggleRef = useRef<HTMLButtonElement>(null);
   const [hasUnsavedContent, setHasUnsavedContent] = useState(false);
   useEffect(() => {
     const listener = (event: Event) => setHasUnsavedContent(Boolean((event as CustomEvent).detail));
@@ -872,9 +874,23 @@ export default function AdminWorkspace({
     () => menuItems.find((item) => item.id === activePanel) ?? menuItems[0],
     [activePanel],
   );
+  const choosePanel = (id: PanelId) => {
+    if (id !== activePanel && hasUnsavedContent && !window.confirm('Discard unsaved content changes?')) return;
+    setActivePanel(id);
+    setCompactMenuOpen(false);
+  };
 
   return (
     <section className="admin-workspace" aria-label="Administrator workspace">
+      <div className="admin-compact-navigation" onKeyDown={event => { if (event.key === 'Escape' && compactMenuOpen) { setCompactMenuOpen(false); compactToggleRef.current?.focus(); } }}>
+        <button ref={compactToggleRef} type="button" className="admin-compact-toggle" aria-expanded={compactMenuOpen} aria-controls="admin-compact-menu" onClick={() => setCompactMenuOpen(open => !open)}>
+          ADMIN / {activeItem.label} <span aria-hidden="true">{compactMenuOpen ? '▴' : '▾'}</span>
+        </button>
+        <nav id="admin-compact-menu" className="admin-compact-menu" aria-label="Admin modules" hidden={!compactMenuOpen}>
+          {menuItems.map(item => <button type="button" key={item.id} aria-current={activePanel === item.id ? 'page' : undefined} onClick={() => choosePanel(item.id)}>{item.label}</button>)}
+          <form action="/api/auth/logout" method="post"><button type="submit">Sign out</button></form>
+        </nav>
+      </div>
       <aside className="admin-sidebar">
         <div className="admin-sidebar-brand">
           <span className="admin-brand-mark" aria-hidden="true" />
@@ -891,7 +907,7 @@ export default function AdminWorkspace({
               type="button"
               aria-current={activePanel === item.id ? 'page' : undefined}
               aria-label={`Open ${item.label} window`}
-              onClick={() => { if (item.id === activePanel || !hasUnsavedContent || window.confirm('Discard unsaved content changes?')) setActivePanel(item.id); }}
+              onClick={() => choosePanel(item.id)}
               key={item.id}
             >
               <span>{item.index}</span>

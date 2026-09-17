@@ -72,3 +72,37 @@ export async function POST(request: NextRequest) {
   revalidatePath('/journey','layout'); revalidatePath('/admin');
   return json({ok:true,record:data});
 }
+
+export async function DELETE(request: NextRequest) {
+  if (!sameOrigin(request)) return json({ error: 'Invalid request origin.' },403);
+  const auth = await authorizeAdmin();
+  if ('error' in auth) return json({ error: auth.error },auth.status);
+  let body;
+  try { body = await readJsonObject(request); } catch { return json({ error: 'Invalid delete request.' },400); }
+  const kind = clean(body.kind), id = clean(body.id), confirmTitle = clean(body.confirmTitle);
+  if (!['thread','subthread'].includes(kind) || !UUID.test(id) || !confirmTitle) return json({ error: 'Choose a saved thread or subthread and confirm its title.' },400);
+
+  if (kind === 'thread') {
+    const { data: record, error: readError } = await auth.supabase.from('threads').select('id,title,slug').eq('id',id).eq('destination','journey').maybeSingle();
+    if (readError) return json({ error: 'Thread could not be checked. Try again.' },503);
+    if (!record) return json({ error: 'Thread no longer exists. Refresh the list.' },404);
+    if (record.title !== confirmTitle) return json({ error: 'The thread title has changed. Refresh before deleting.' },409);
+    const { data: deleted, error } = await auth.supabase.from('threads').delete().eq('id',id).eq('destination','journey').eq('title',record.title).select('id').maybeSingle();
+    if (error) return json({ error: 'Thread could not be deleted. Nothing was removed.' },503);
+    if (!deleted) return json({ error: 'Thread changed before deletion. Refresh and try again.' },409);
+    revalidatePath('/journey'); revalidatePath(`/journey/${record.slug}`); revalidatePath('/admin');
+    return json({ ok:true });
+  }
+
+  const { data: record, error: readError } = await auth.supabase.from('thread_subthreads').select('id,title,slug,thread_id').eq('id',id).maybeSingle();
+  if (readError) return json({ error: 'Subthread could not be checked. Try again.' },503);
+  if (!record) return json({ error: 'Subthread no longer exists. Refresh the thread.' },404);
+  const { data: parent, error: parentError } = await auth.supabase.from('threads').select('slug,destination').eq('id',record.thread_id).maybeSingle();
+  if (parentError || parent?.destination !== 'journey') return json({ error: 'Parent thread could not be verified.' },404);
+  if (record.title !== confirmTitle) return json({ error: 'The subthread title has changed. Refresh before deleting.' },409);
+  const { data: deleted, error } = await auth.supabase.from('thread_subthreads').delete().eq('id',id).eq('thread_id',record.thread_id).eq('title',record.title).select('id').maybeSingle();
+  if (error) return json({ error: 'Subthread could not be deleted. Nothing was removed.' },503);
+  if (!deleted) return json({ error: 'Subthread changed before deletion. Refresh and try again.' },409);
+  revalidatePath('/journey'); revalidatePath(`/journey/${parent.slug}`); revalidatePath(`/journey/${parent.slug}/${record.slug}`); revalidatePath('/admin');
+  return json({ ok:true });
+}

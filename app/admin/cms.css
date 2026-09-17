@@ -6,14 +6,18 @@
 .journey-admin button:focus-visible,.journey-admin a:focus-visible,.journey-admin select:focus-visible { outline:2px solid var(--current); outline-offset:3px; }
 .journey-admin button:not(:disabled):hover { border-color:var(--current); }
 .journey-admin-toolbar,.journey-admin-start,.journey-admin-section-heading { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem; }
+.journey-admin-toolbar { padding:1rem clamp(.75rem,2vw,1.5rem) 0; }
 .journey-admin-toolbar nav { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; min-width:0; }
-.journey-admin-toolbar nav button { border:0; background:none; padding:.5rem 0; color:var(--current); overflow-wrap:anywhere; }
+.journey-admin-toolbar nav button { overflow-wrap:anywhere; }
+.journey-admin-toolbar nav button[aria-current=page] { color:var(--current); border-color:var(--current); }
+.journey-admin-toolbar nav button:disabled { color:var(--muted-ink); }
+.journey-admin-location { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; min-width:0; overflow-wrap:anywhere; }
 .journey-admin-start { padding:1rem 0 2rem; border-bottom:1px solid var(--panel-border); }
 .journey-admin-start h2 { margin:.75rem 0; font:900 clamp(2rem,5vw,4rem)/1 'Arial Black',Arial,sans-serif; letter-spacing:-.07em; }
 .journey-admin-start p:last-child,.journey-admin-help { color:var(--muted-ink); font-size:1rem; line-height:1.6; }
-.journey-admin-filters { display:flex; align-items:end; gap:1rem; margin:1.5rem 0; }
+.journey-admin-filters { display:flex; align-items:end; flex-wrap:wrap; gap:1rem; margin:1.5rem 0; }
 .journey-admin label { display:grid; gap:.5rem; font-size:.875rem; font-weight:600; }
-.journey-admin-filters label:first-child { flex:1; }
+.journey-admin-filters label:first-child { flex:1 1 16rem; min-width:0; }
 .journey-admin input:not([type=file]):not([type=checkbox]),.journey-admin select { width:100%; min-width:0; padding:.75rem; border:1px solid var(--panel-border); background:var(--hero-surface-alt); color:var(--ink); font:400 1rem/1.4 Arial,sans-serif; }
 .journey-admin .journey-thread-list { grid-template-columns:repeat(3,minmax(0,1fr)); }
 .journey-admin-card { appearance:none; width:100%; cursor:pointer; text-align:left; font-family:inherit; }
@@ -80,6 +84,16 @@
 .journey-admin .journey-thread-thumbnail,.journey-admin .journey-subthread-thumbnail { width:100%; flex:none; }
 .journey-admin-subthread-search { width:min(100%,25rem); margin:0 0 1rem; }
 .journey-admin-no-results { border:1px solid var(--panel-border); padding:1.5rem; color:var(--muted-ink); font:900 .7rem/1.3 'Arial Black',Arial,sans-serif; letter-spacing:.1em; }
+.journey-admin-notice { margin:0 0 1rem; padding:.75rem 1rem; border:1px solid var(--current); color:var(--current); }
+.journey-admin-danger { margin:2rem 0; padding:1.25rem; border:1px solid color-mix(in srgb,#b84b45 65%,var(--panel-border)); background:var(--hero-surface-alt); }
+.journey-admin-danger h3 { margin:0 0 .75rem; color:#b84b45; font:900 1rem/1.2 'Arial Black',Arial,sans-serif; letter-spacing:.06em; }
+.journey-admin-danger p { margin:.5rem 0 1rem; line-height:1.5; }
+.journey-admin-danger small { display:block; margin-top:.75rem; color:var(--muted-ink); }
+.journey-admin button.journey-admin-delete { border-color:#b84b45; color:#b84b45; }
+.journey-admin-delete-confirm { display:grid; gap:1rem; max-width:32rem; }
+.journey-admin-delete-confirm strong { overflow-wrap:anywhere; }
+.journey-admin-delete-confirm > div { display:flex; flex-wrap:wrap; gap:.75rem; }
+.journey-admin-delete-confirm > div button { min-height:2.75rem; }
 .journey-admin-start { padding:0 0 1.5rem; }
 .journey-admin-start h2 { font-size:clamp(2rem,3vw,3rem); }
 .journey-admin .journey-subthread-intro { max-width:58rem; }
@@ -108,3 +122,5 @@
 .journey-admin-story .journey-admin-help { margin:0; }
 .journey-admin-children .journey-subthread { width:100%; }
 @media(max-width:45rem){.journey-admin .journey-thread-list,.journey-admin .journey-subthread-list{grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),19rem))}}
+@media(max-width:70rem){.admin-journey-window > .journey-admin{width:100%;max-width:none;padding:clamp(.75rem,2vw,1.5rem)}.journey-admin-content{max-width:none}.journey-admin .journey-subthread-intro{max-width:none}}
+@media(max-width:40rem){.journey-admin-save > label,.journey-admin-save > div,.journey-admin-save > button{width:100%}.journey-admin-category > label{min-width:0;width:100%}.journey-admin-cover-actions > *,.journey-admin-delete-confirm > div button,.journey-admin-delete-confirm > label{width:100%}.journey-admin-story > label:first-of-type{max-width:none}.journey-admin-crop{width:100%}}

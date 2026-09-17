@@ -20,9 +20,12 @@
 .journey-feedback textarea { resize:vertical; }
 .journey-feedback input:focus-visible,.journey-feedback textarea:focus-visible,.journey-feedback button:focus-visible { outline:2px solid var(--current); outline-offset:3px; }
 .journey-feedback .journey-comment-actions { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; }
+.journey-comment-actions small { flex:1 1 16rem; min-width:0; }
+.journey-feedback .journey-comment-actions button { max-width:100%; }
 .journey-comment-actions small,.journey-comments-empty { color:var(--muted-ink); font-size:.875rem; line-height:1.5; }
 .journey-comment p { white-space:pre-wrap; overflow-wrap:anywhere; }
 .journey-comment strong { overflow-wrap:anywhere; }
+.journey-comment header { flex-wrap:wrap; }
 .journey-feedback .feedback-honeypot { display:none; }
 .journey-reaction-bar button[aria-pressed=true] { color:var(--current); border-color:var(--current); background:color-mix(in srgb,var(--current) 10%,transparent); }
 .journey-feedback button:disabled { opacity:.45; cursor:default; }

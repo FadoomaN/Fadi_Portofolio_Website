@@ -85,6 +85,8 @@ export default function ContentManager({initialThreads,initialCategories}:{initi
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
   const [notice,setNotice]=useState('');
+  const [deleteOpen,setDeleteOpen]=useState(false);
+  const [deleteConfirmation,setDeleteConfirmation]=useState('');
   const lock=useRef(false);
   const thread=threads.find(item=>item.id===threadId);
   const contentKey=threadId?`${threadId}:${revision}`:'';
@@ -116,7 +118,7 @@ export default function ContentManager({initialThreads,initialCategories}:{initi
     const image=post?.thread_media?.find(item=>item.media_type==='image');
     setKind(nextKind);setDraft(draftFrom(record));setMediaMode(image?'image':'none');
     setMediaImage(image?.media_reference??'');setMediaAlt(image?.media_alt??'');
-    setDirty(false);setError('');setNotice('');
+    setDirty(false);setError('');setNotice('');setDeleteOpen(false);setDeleteConfirmation('');
   }
   function home(){if(!canLeave())return;setKind(null);setThreadId('');setSubthreadSearch('');setDirty(false);setError('');setNotice('');}
   function openThread(item:Thread){if(!canLeave())return;setThreadId(item.id);setSubthreadSearch('');select('thread',item);}
@@ -182,13 +184,33 @@ export default function ContentManager({initialThreads,initialCategories}:{initi
     } catch(cause){setError((cause as Error).message);}
     finally{lock.current=false;setBusy(false);}
   }
+  async function deleteRecord() {
+    if (!kind || !draft.id || deleteConfirmation !== draft.title || dirty || lock.current) return;
+    lock.current=true;setBusy(true);setError('');setNotice('');
+    try {
+      const response=await fetch('/api/admin/editor',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind,id:draft.id,confirmTitle:deleteConfirmation})});
+      const result=await response.json() as {ok?:boolean;error?:string};
+      if(!response.ok || !result.ok)throw new Error(result.error||'Delete failed. Try again.');
+      if(kind==='thread'){
+        setThreads(items=>items.filter(item=>item.id!==draft.id));
+        setThreadId('');setKind(null);setNotice(`Thread “${draft.title}” deleted.`);
+      }else{
+        setKind('thread');setDraft(draftFrom(thread??{}));setRevision(value=>value+1);
+        setNotice(`Subthread “${draft.title}” deleted.`);
+      }
+      setDirty(false);setDeleteOpen(false);setDeleteConfirmation('');router.refresh();
+    }catch(cause){setError((cause as Error).message);}
+    finally{lock.current=false;setBusy(false);}
+  }
   const canPreview=Boolean(draft.id&&draft.status==='published'&&!dirty&&(kind==='thread'||thread?.status==='published'));
   const preview=kind==='thread'?`/journey/${draft.slug}`:`/journey/${thread?.slug}/${draft.slug}`;
   return <div className="journey-admin">
     <div className="journey-admin-toolbar">
-      <nav aria-label="Journey editor location"><button type="button" onClick={home}>Journey</button>{thread&&<><span>/</span><button type="button" onClick={()=>openThread(thread)}>{thread.title}</button></>}{kind==='subthread'&&<><span>/</span><span>{draft.title||'New subthread'}</span></>}</nav>
+      <nav aria-label="Threads sections"><button type="button" aria-current="page" onClick={home}>Journey</button><button type="button" disabled aria-label="Projects temporarily unavailable">Projects</button></nav>
+      {thread&&<div className="journey-admin-location"><button type="button" onClick={()=>openThread(thread)}>{thread.title}</button>{kind==='subthread'&&<><span>/</span><span>{draft.title||'New subthread'}</span></>}</div>}
       {kind&&<button type="button" onClick={home}>All threads</button>}
     </div>
+    {!kind&&notice&&<p className="journey-admin-notice" role="status">{notice}</p>}
     {!kind?<><header className="journey-admin-start"><div><p className="journey-kicker">Your Journey / edit mode</p><h2>JOURNEY</h2><p>Choose a thread, then edit its subthreads. Each subthread is a story with media or article text.</p></div><button type="button" className="admin-profile-save" onClick={()=>create('thread')}>+ New thread</button></header>
       <div className="journey-admin-filters"><label>Find a thread<input type="search" value={search} onChange={event=>setSearch(event.target.value)} placeholder="Search title, description, category…" /></label><label>Show<select value={filter} onChange={event=>setFilter(event.target.value)}><option value="all">All threads</option><option value="published">Published</option><option value="draft">Drafts</option><option value="archived">Archived</option></select></label></div>
       <div className="journey-thread-list">{visible.map(item=><button type="button" className="journey-thread journey-admin-card" key={item.id} onClick={()=>openThread(item)}>
@@ -239,6 +261,14 @@ export default function ContentManager({initialThreads,initialCategories}:{initi
       </button>)}</div>}
       {!loading&&!subthreads.length&&<p className="journey-admin-help">Add a subthread to publish a photo story or article.</p>}
       {!loading&&subthreads.length>0&&!visibleSubthreads.length&&<p className="journey-admin-no-results" role="status">NO SUBTHREADS FOUND</p>}
+    </section>}
+    {kind&&draft.id&&<section className="journey-admin-danger" aria-labelledby="journey-admin-danger-title">
+      <h3 id="journey-admin-danger-title">DANGER ZONE</h3>
+      <p>Deleting this {kind} permanently removes its story and related comments and reactions.</p>
+      {!deleteOpen?<button type="button" className="journey-admin-delete" disabled={busy||dirty} onClick={()=>{setDeleteOpen(true);setDeleteConfirmation('');setError('');}}>DELETE {kind.toUpperCase()}</button>
+        :<div className="journey-admin-delete-confirm"><label>Type <strong>{draft.title}</strong> to confirm<input value={deleteConfirmation} onChange={event=>setDeleteConfirmation(event.target.value)} autoComplete="off" /></label><div><button type="button" onClick={()=>{setDeleteOpen(false);setDeleteConfirmation('');}}>Cancel</button><button type="button" className="journey-admin-delete" disabled={busy||deleteConfirmation!==draft.title} onClick={()=>void deleteRecord()}>{busy?'Deleting…':`Permanently delete ${kind}`}</button></div></div>}
+      {dirty&&<small>Save or discard your unsaved changes before deleting.</small>}
+      {error&&<p role="alert" className="admin-profile-error">{error}</p>}
     </section>}
   </div>;
 }

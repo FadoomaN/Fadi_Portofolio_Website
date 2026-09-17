@@ -219,7 +219,8 @@ export async function DELETE(request: NextRequest) {
   try { body = await request.json(); } catch { return NextResponse.json({ error: 'The delete request is invalid.' }, { status: 400 }); }
   const kind = text(body.kind);
   const id = text(body.id);
-  const table = { thread: 'threads', 'thread-entry': 'thread_entries', 'about-section': 'about_sections', 'journey-thread': 'journey_threads', 'journey-update': 'journey_updates', project: 'projects', 'project-update': 'project_updates' }[kind as string];
+  if (kind === 'thread') return NextResponse.json({ error: 'Delete Threads in the Threads editor after confirming the title.' }, { status: 400 });
+  const table = { 'thread-entry': 'thread_entries', 'about-section': 'about_sections', 'journey-thread': 'journey_threads', 'journey-update': 'journey_updates', project: 'projects', 'project-update': 'project_updates' }[kind as string];
   if (!table || !UUID.test(id)) return NextResponse.json({ error: 'The selected record is invalid.' }, { status: 400 });
   const { error } = await auth.supabase.from(table).delete().eq('id', id);
   if (error) return NextResponse.json({ error: 'The content could not be deleted.' }, { status: 500 });
