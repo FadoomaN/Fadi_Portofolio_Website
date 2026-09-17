@@ -8,7 +8,6 @@ Comments require these values in `.env.local` (and the production host's environ
 
 | Variable | Where it comes from |
 | --- | --- |
-| `OPENAI_API_KEY` | Your OpenAI API project |
 | `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile widget secret |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | The same Turnstile widget's public site key |
 | `SUPABASE_SERVICE_ROLE_KEY` | This Supabase project's server secret/service-role key |
@@ -21,15 +20,14 @@ For local development, put the values in the git-ignored `.env.local`. Cloudflar
 
 1. The visitor enters a display name (2–60 characters) and comment (1–2,000 characters).
 2. The server validates the Turnstile token and its hostname/action, then applies database rate limiting.
-3. OpenAI Moderation checks the content. Flagged content is not published; negative sentiment, disagreement and ordinary criticism are welcome when they do not trigger moderation.
-4. Excessive links, repeated-character spam and duplicate posts are rejected separately.
-5. Only a successful server-side check can save a published comment. It becomes visible immediately. There is no admin approval inbox.
+3. Excessive links, repeated-character spam and duplicate posts are rejected.
+4. Only a successful server-side check can save a published comment. It becomes visible immediately. There is no admin approval inbox.
 
-If keys are missing or a provider is unavailable, new comments are unavailable instead of bypassing moderation. Existing published comments and reactions still work. Automated checks can make mistakes; neither AI nor CAPTCHA guarantees perfect abuse prevention. Visitors are told that comment text is checked by OpenAI and the anti-bot check uses Cloudflare.
+If required keys are missing or Turnstile is unavailable, new comments are unavailable instead of bypassing the anti-bot check. Existing published comments and reactions still work. CAPTCHA and basic spam checks cannot prevent every abusive comment. Visitors are told that the anti-bot check uses Cloudflare.
 
 Reactions use a one-year HttpOnly anonymous browser cookie: one like OR dislike per entry/browser, changeable and removable. Clearing cookies or switching browsers creates a new anonymous identity; this is not one vote per verified person.
 
-Official references: [OpenAI Moderation](https://developers.openai.com/api/docs/guides/moderation), [Turnstile server verification](https://developers.cloudflare.com/turnstile/get-started/server-side-validation/).
+Official reference: [Turnstile server verification](https://developers.cloudflare.com/turnstile/get-started/server-side-validation/).
 
 ## Database migrations
 

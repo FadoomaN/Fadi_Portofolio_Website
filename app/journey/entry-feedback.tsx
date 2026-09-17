@@ -82,7 +82,7 @@ export default function EntryFeedback({ entryId, initialFeedback }: { entryId: s
         <textarea id={`comment-${entryId}`} name="comment" rows={3} required maxLength={2000} value={body} placeholder="Write something…" onChange={event => { setBody(event.target.value); requestId.current = ''; }} />
         <div className="feedback-honeypot" aria-hidden="true"><label>Leave empty<input name="website" tabIndex={-1} autoComplete="off" /></label></div>
         {feedback.turnstileSiteKey&&<TurnstileCheck siteKey={feedback.turnstileSiteKey} onToken={setTurnstileToken} revision={checkRevision} />}
-        <div className="journey-comment-actions"><small>Criticism is welcome. Comments are checked automatically for hate, threats and spam. Your name is public; text is checked by OpenAI and the anti-bot check is provided by Cloudflare.</small><button type="submit" disabled={busy||!turnstileToken}>{busy ? 'CHECKING…' : 'POST ↗'}</button></div>
+        <div className="journey-comment-actions"><small>Criticism is welcome. Your name is public. Cloudflare checks for bots, and basic spam checks protect comments.</small><button type="submit" disabled={busy||!turnstileToken}>{busy ? 'CHECKING…' : 'POST ↗'}</button></div>
       </form>}
       {feedback?.commentsEnabled&&!feedback.commentChecksReady&&<p>Comments are temporarily unavailable. Please try again later.</p>}
       {feedback && !feedback.commentsEnabled && <p>Comments are closed for this entry.</p>}

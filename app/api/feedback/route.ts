@@ -46,7 +46,7 @@ export async function POST(request:NextRequest){
       const service=createServiceSupabaseClient();
       const {error:limit}=await service.rpc('reserve_comment_check',{p_entry:body.entry,p_visitor:visitor});
       if(limit)return reply({error:limit.code==='P0001'?'Please wait before sending more comments.':'Comments are unavailable for this entry.'},limit.code==='P0001'?429:400);
-      await checkComment(name,comment);
+      checkComment(name,comment);
       const {data,error}=await service.rpc('publish_checked_comment',{p_entry:body.entry,p_visitor:visitor,p_name:name,p_body:comment,p_request:body.requestId});
       if(error)return reply({error:error.code==='22023'?'This comment was already posted or comments are closed.':error.code==='P0001'?'Please wait before sending more comments.':'The comment could not be saved. Please try again.'},error.code==='P0001'?429:error.code==='22023'?400:503);
       return reply({...data,...settings()});
