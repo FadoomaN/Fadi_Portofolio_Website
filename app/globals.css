@@ -7347,6 +7347,9 @@ html[data-home-intro='seen'] .life-cpu-amp-signal-out {
   .admin-compact-navigation {
     display: block;
     min-width: 0;
+    position: relative;
+    z-index: 4;
+    overflow: visible;
     border-bottom: 1px solid var(--panel-border);
     background: var(--header-surface);
   }
@@ -7369,17 +7372,46 @@ html[data-home-intro='seen'] .life-cpu-amp-signal-out {
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    padding: 0.9rem 1rem;
+    padding: 1rem;
+  }
+
+  .admin-compact-caret {
+    display: inline-block;
+    transition: transform 200ms ease-out;
+  }
+
+  .admin-compact-toggle[aria-expanded='true'] .admin-compact-caret {
+    transform: rotate(180deg);
   }
 
   .admin-compact-menu {
     display: grid;
+    position: absolute;
+    top: 100%;
+    right: -1px;
+    left: -1px;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
-    border-top: 1px solid var(--panel-border);
+    margin-top: 0.35rem;
+    overflow: hidden;
+    border: 1px solid var(--panel-border);
+    background: var(--header-surface);
+    box-shadow: 0 0.75rem 1.5rem rgb(0 0 0 / 9%);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-6px);
+    visibility: hidden;
+    transition:
+      opacity 200ms ease-out,
+      transform 200ms ease-out,
+      visibility 0s linear 200ms;
   }
 
-  .admin-compact-menu[hidden] {
-    display: none;
+  .admin-compact-menu.is-open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+    visibility: visible;
+    transition-delay: 0s;
   }
 
   .admin-compact-menu button {

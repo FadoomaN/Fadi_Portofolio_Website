@@ -884,9 +884,9 @@ export default function AdminWorkspace({
     <section className="admin-workspace" aria-label="Administrator workspace">
       <div className="admin-compact-navigation" onKeyDown={event => { if (event.key === 'Escape' && compactMenuOpen) { setCompactMenuOpen(false); compactToggleRef.current?.focus(); } }}>
         <button ref={compactToggleRef} type="button" className="admin-compact-toggle" aria-expanded={compactMenuOpen} aria-controls="admin-compact-menu" onClick={() => setCompactMenuOpen(open => !open)}>
-          ADMIN / {activeItem.label} <span aria-hidden="true">{compactMenuOpen ? '▴' : '▾'}</span>
+          ADMIN / {activeItem.label} <span className="admin-compact-caret" aria-hidden="true">▾</span>
         </button>
-        <nav id="admin-compact-menu" className="admin-compact-menu" aria-label="Admin modules" hidden={!compactMenuOpen}>
+        <nav id="admin-compact-menu" className={`admin-compact-menu${compactMenuOpen ? ' is-open' : ''}`} aria-label="Admin modules" aria-hidden={!compactMenuOpen} inert={compactMenuOpen ? undefined : ''}>
           {menuItems.map(item => <button type="button" key={item.id} aria-current={activePanel === item.id ? 'page' : undefined} onClick={() => choosePanel(item.id)}>{item.label}</button>)}
           <form action="/api/auth/logout" method="post"><button type="submit">Sign out</button></form>
         </nav>
