@@ -848,6 +848,20 @@ function ContactEditor({ contact }: { contact: PublicContactRecord | null }) {
   return <form className="admin-profile-form" onSubmit={save}><fieldset className="admin-profile-section"><legend><span>Public contact only</span><strong>RLS</strong></legend><div className="admin-profile-fields"><label className="admin-profile-field"><span>Email</span><input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></label><label className="admin-profile-field"><span>GitHub</span><input value={form.githubUrl} onChange={(event) => setForm({ ...form, githubUrl: event.target.value })} /></label><label className="admin-profile-field"><span>LinkedIn</span><input value={form.linkedinUrl} onChange={(event) => setForm({ ...form, linkedinUrl: event.target.value })} /></label><label className="admin-profile-field"><span>CV / resume</span><input value={form.cvUrl} onChange={(event) => setForm({ ...form, cvUrl: event.target.value })} /></label></div></fieldset><div className="admin-profile-actions"><p className="admin-profile-notice" role="status">{notice}</p><button className="admin-profile-save" type="submit">Save Contact</button></div></form>;
 }
 
+function MaintenancePanel({ label, title, index }: { label: string; title: string; index: string }) {
+  return (
+    <div className="admin-module-window">
+      <div className="admin-module-heading">
+        <div><span>{label}</span><h2>{title}</h2></div>
+        <strong>{index}</strong>
+      </div>
+      <div className="admin-empty-state" role="status">
+        <strong>Under development</strong>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminWorkspace({
   experiences,
   threads,
@@ -1001,17 +1015,11 @@ export default function AdminWorkspace({
           )}
 
           {activePanel === 'contact' && (
-            <div className="admin-module-window"><div className="admin-module-heading"><div><span>Public channel / 07</span><h2>Contact</h2></div><strong>01</strong></div><ContactEditor contact={publicContact} /></div>
+            <MaintenancePanel label="Public channel / 06" title="Contact" index="06" />
           )}
 
           {activePanel === 'security' && (
-            <div className="admin-module-window">
-              <div className="admin-module-heading">
-                <div><span>Security module / 07</span><h2>Security</h2></div>
-                <strong>01</strong>
-              </div>
-              <ProfileEditor profile={profile} privateContact={privateContact} />
-            </div>
+            <MaintenancePanel label="Security module / 07" title="Security" index="07" />
           )}
         </div>
       </div>
