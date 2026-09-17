@@ -44,19 +44,10 @@ export function sameOrigin(request: Request) {
     return false;
   }
 
-  const forwardedHost =
-    request.headers.get('x-forwarded-host') ??
-    request.headers.get('host');
+  const allowedOrigins = new Set([
+    'https://fadialhazim.com',
+    'https://www.fadialhazim.com',
+  ]);
 
-  const forwardedProto =
-    request.headers.get('x-forwarded-proto') ??
-    new URL(request.url).protocol.replace(':', '');
-
-  if (!forwardedHost) {
-    return false;
-  }
-
-  const expectedOrigin = `${forwardedProto}://${forwardedHost}`;
-
-  return origin === expectedOrigin;
+  return allowedOrigins.has(origin);
 }
