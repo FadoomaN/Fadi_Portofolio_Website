@@ -1,5 +1,4 @@
 -- Additive migration: retain all existing content and the existing AAL2 admin gate.
-begin;
 
 create table public.thread_subthreads (
   id uuid primary key default gen_random_uuid(),
@@ -195,4 +194,4 @@ revoke all on function public.admin_entry_stats(uuid[]) from public,anon;
 grant execute on function public.admin_entry_stats(uuid[]) to authenticated;
 
 notify pgrst,'reload schema';
-commit;
+;

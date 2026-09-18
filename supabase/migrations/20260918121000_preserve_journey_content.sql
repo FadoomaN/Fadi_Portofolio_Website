@@ -1,5 +1,4 @@
 -- Move the existing on-screen content into the CMS, without replacing existing records.
-begin;
 insert into public.threads(title,slug,destination,description,status,sort_order) values
 ('COOKING','cooking','journey','Food, recipes, experiments and things learned over time.','published',0),
 ('SPORTS','sports','journey','Training, progress and physical activities.','published',1),
@@ -27,4 +26,4 @@ select t.id,s.id,'FIRST RAMEN ATTEMPT','2026-09-16',
 'published',0 from public.threads t join public.thread_subthreads s on s.thread_id=t.id
 where t.slug='cooking' and t.destination='journey' and s.slug='ramen'
 and not exists(select 1 from public.thread_entries e where e.subthread_id=s.id);
-commit;
+;

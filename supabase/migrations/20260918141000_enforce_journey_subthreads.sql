@@ -1,3 +1,4 @@
+
 begin;
 create function public.require_journey_subthread() returns trigger
 language plpgsql security definer set search_path='' as $$
@@ -12,3 +13,4 @@ create trigger require_journey_subthread_before_write
 before insert or update of thread_id,subthread_id on public.thread_entries
 for each row execute function public.require_journey_subthread();
 commit;
+;

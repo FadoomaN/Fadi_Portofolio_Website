@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import ContentManager from './content-manager';
 import type { Thread } from '@/lib/content';
 
-type PanelId = 'overview' | 'profile' | 'about' | 'threads' | 'career' | 'contact' | 'security';
+type PanelId = 'overview' | 'news' | 'profile' | 'about' | 'threads' | 'career' | 'contact' | 'security';
+type NewsRecord = { id:string; slug:string; title:string; body:string; media_reference:string|null; media_alt:string|null; published_at:string; created_at:string; updated_at:string };
 
 type AboutRecord = {
   id: number;
@@ -86,6 +87,7 @@ type AdminWorkspaceProps = {
   experienceCount: number;
   profile: ProfileRecord | null;
   privateContact: PrivateContactRecord | null;
+  news: NewsRecord[];
 };
 
 type ExperienceFormState = {
@@ -114,17 +116,20 @@ type ProfileFormState = {
   timezone: string;
 };
 
+type NewsFormState = { title:string; slug:string; body:string; mediaMode:'none'|'image'; mediaReference:string; mediaAlt:string };
+
 const DEFAULT_PORTRAIT_REFERENCE = '/fadi-gray-suit.jpg';
 const DEFAULT_PORTRAIT_ALT = 'Fadi Al Hazim wearing a gray suit';
 
 const menuItems: Array<{ id: PanelId; index: string; label: string }> = [
   { id: 'overview', index: '01', label: 'Overview' },
-  { id: 'profile', index: '02', label: 'Profile' },
-  { id: 'about', index: '03', label: 'About' },
-  { id: 'threads', index: '04', label: 'Threads' },
-  { id: 'career', index: '05', label: 'Career' },
-  { id: 'contact', index: '06', label: 'Contact' },
-  { id: 'security', index: '07', label: 'Security' },
+  { id: 'news', index: '02', label: 'Post News' },
+  { id: 'profile', index: '03', label: 'Profile' },
+  { id: 'about', index: '04', label: 'About' },
+  { id: 'threads', index: '05', label: 'Threads' },
+  { id: 'career', index: '06', label: 'Career' },
+  { id: 'contact', index: '07', label: 'Contact' },
+  { id: 'security', index: '08', label: 'Security' },
 ];
 
 const EMPTY_EXPERIENCE: ExperienceFormState = {
@@ -139,6 +144,8 @@ const EMPTY_EXPERIENCE: ExperienceFormState = {
   status: 'draft',
   sortOrder: '0',
 };
+
+const EMPTY_NEWS: NewsFormState = { title:'', slug:'', body:'', mediaMode:'none', mediaReference:'', mediaAlt:'' };
 
 const employmentTypes = [
   ['full-time', 'Full-time'],
@@ -848,6 +855,29 @@ function ContactEditor({ contact }: { contact: PublicContactRecord | null }) {
   return <form className="admin-profile-form" onSubmit={save}><fieldset className="admin-profile-section"><legend><span>Public contact only</span><strong>RLS</strong></legend><div className="admin-profile-fields"><label className="admin-profile-field"><span>Email</span><input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></label><label className="admin-profile-field"><span>GitHub</span><input value={form.githubUrl} onChange={(event) => setForm({ ...form, githubUrl: event.target.value })} /></label><label className="admin-profile-field"><span>LinkedIn</span><input value={form.linkedinUrl} onChange={(event) => setForm({ ...form, linkedinUrl: event.target.value })} /></label><label className="admin-profile-field"><span>CV / resume</span><input value={form.cvUrl} onChange={(event) => setForm({ ...form, cvUrl: event.target.value })} /></label></div></fieldset><div className="admin-profile-actions"><p className="admin-profile-notice" role="status">{notice}</p><button className="admin-profile-save" type="submit">Save Contact</button></div></form>;
 }
 
+function newsToForm(record: NewsRecord): NewsFormState {
+  return { title:record.title, slug:record.slug, body:record.body, mediaMode:record.media_reference?'image':'none', mediaReference:record.media_reference ?? '', mediaAlt:record.media_alt ?? '' };
+}
+
+function NewsManager({ news }: { news: NewsRecord[] }) {
+  const router = useRouter();
+  const [records, setRecords] = useState(news);
+  const [selectedId, setSelectedId] = useState<string | null>(news[0]?.id ?? null);
+  const [form, setForm] = useState<NewsFormState>(news[0] ? newsToForm(news[0]) : EMPTY_NEWS);
+  const [savedForm, setSavedForm] = useState<NewsFormState>(news[0] ? newsToForm(news[0]) : EMPTY_NEWS);
+  const [notice, setNotice] = useState(''); const [error, setError] = useState(''); const [saving, setSaving] = useState(false); const [deleteArmed, setDeleteArmed] = useState(false);
+  const dirty = (Object.keys(form) as Array<keyof NewsFormState>).some(key => form[key] !== savedForm[key]);
+  const resetFeedback = () => { setNotice(''); setError(''); setDeleteArmed(false); };
+  const choose = (record: NewsRecord) => { const next = newsToForm(record); setSelectedId(record.id); setForm(next); setSavedForm(next); resetFeedback(); };
+  const create = () => { setSelectedId(null); setForm(EMPTY_NEWS); setSavedForm(EMPTY_NEWS); resetFeedback(); };
+  const update = <K extends keyof NewsFormState>(key: K, value: NewsFormState[K]) => { setForm(current => ({ ...current, [key]: value })); resetFeedback(); };
+  const setMediaMode = (mediaMode: NewsFormState['mediaMode']) => setForm(current => mediaMode==='none'?{...current,mediaMode,mediaReference:'',mediaAlt:''}:{...current,mediaMode});
+  const upload = async (event: ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; if (!file) return; try { update('mediaReference', await uploadMedia(file)); setNotice('Image uploaded. Save the post to keep it.'); } catch (reason) { setError(reason instanceof Error ? reason.message : 'The image could not be uploaded.'); } finally { event.target.value=''; } };
+  const save = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); setSaving(true); resetFeedback(); try { const response = await fetch('/api/admin/news',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:selectedId,...form})}); const result = await response.json() as {post?:NewsRecord;error?:string}; if(!response.ok||!result.post) throw new Error(result.error ?? 'The news post could not be saved.'); const post=result.post; setRecords(current => { const existing=current.findIndex(item=>item.id===post.id); return existing<0?[post,...current]:current.map(item=>item.id===post.id?post:item); }); const next=newsToForm(post); setSelectedId(post.id);setForm(next);setSavedForm(next);setNotice('News post saved.');router.refresh(); } catch(reason) { setError(reason instanceof Error ? reason.message : 'The news post could not be saved.'); } finally { setSaving(false); } };
+  const remove = async () => { if(!selectedId) return; if(!deleteArmed){setDeleteArmed(true);setNotice('Select Delete again to confirm.');return;} setSaving(true);resetFeedback();try{const response=await fetch('/api/admin/news',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:selectedId,confirmTitle:form.title})});const result=await response.json() as {error?:string};if(!response.ok)throw new Error(result.error??'The news post could not be deleted.');const next=records.filter(record=>record.id!==selectedId);setRecords(next);if(next[0])choose(next[0]);else create();setNotice('News post deleted.');router.refresh();}catch(reason){setError(reason instanceof Error?reason.message:'The news post could not be deleted.');}finally{setSaving(false);}};
+  return <div className="admin-module-window admin-news-window"><div className="admin-module-heading"><div><span>News module / 02</span><h2>Post News</h2></div><strong>{String(records.length).padStart(2,'0')}</strong></div><div className="admin-news-manager"><aside><button type="button" className="admin-news-new" onClick={create}>+ New post</button>{records.map(record=><button type="button" className={selectedId===record.id?'is-active':''} onClick={()=>choose(record)} key={record.id}><strong>{record.title}</strong><span>{formatDate(record.published_at)}</span></button>)}</aside><form onSubmit={save}><div className="admin-news-form-heading"><span>{selectedId?'Edit post':'New post'}</span><a href={selectedId?`/news/${form.slug}`:'#'} target="_blank" rel="noreferrer" aria-disabled={!selectedId}>Preview ↗</a></div><label><span>Title</span><input required maxLength={180} value={form.title} onChange={event=>update('title',event.target.value)} /></label><label><span>URL slug</span><input required maxLength={120} pattern="[a-z0-9]+(?:-[a-z0-9]+)*" value={form.slug} onChange={event=>update('slug',event.target.value.toLowerCase().replace(/[^a-z0-9-]/g,'').replace(/--+/g,'-'))} /></label><label><span>Body</span><textarea rows={8} maxLength={12000} value={form.body} onChange={event=>update('body',event.target.value)} /></label><fieldset className="admin-news-media"><legend>Media</legend><div className="admin-news-media-choice"><button type="button" className={form.mediaMode==='none'?'is-active':''} onClick={()=>setMediaMode('none')}>No media</button><button type="button" className={form.mediaMode==='image'?'is-active':''} onClick={()=>setMediaMode('image')}>Image</button></div>{form.mediaMode==='image'&&<>{form.mediaReference&&<img src={form.mediaReference} alt={form.mediaAlt} />}<label className="admin-upload-button">{form.mediaReference?'Replace image':'Upload image'}<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={upload} /></label>{form.mediaReference&&<button type="button" className="admin-profile-reset" onClick={()=>setMediaMode('none')}>Remove image</button>}<label><span>Image alt text</span><input maxLength={300} value={form.mediaAlt} onChange={event=>update('mediaAlt',event.target.value)} /></label></>}</fieldset><div className="admin-profile-actions"><div><p className="admin-profile-error" role="alert">{error}</p><p className="admin-profile-notice" role="status">{notice}</p>{!error&&!notice&&<small>{dirty?'Unsaved changes':'Ready to post'}</small>}</div><button type="button" className="admin-profile-reset" onClick={()=>{setForm(savedForm);resetFeedback();}} disabled={!dirty||saving}>Reset</button>{selectedId&&<button type="button" className="admin-experience-delete" onClick={remove} disabled={saving}>{deleteArmed?'Confirm delete':'Delete'}</button>}<button className="admin-profile-save" type="submit" disabled={saving||!dirty}>{saving?'Saving…':selectedId?'Save changes':'Post News'}</button></div></form></div></div>;
+}
+
 function MaintenancePanel({ label, title, index }: { label: string; title: string; index: string }) {
   return (
     <div className="admin-module-window">
@@ -874,6 +904,7 @@ export default function AdminWorkspace({
   experienceCount,
   profile,
   privateContact,
+  news,
 }: AdminWorkspaceProps) {
   const [activePanel, setActivePanel] = useState<PanelId>('overview');
   const [compactMenuOpen, setCompactMenuOpen] = useState(false);
@@ -992,8 +1023,10 @@ export default function AdminWorkspace({
             </div>
           )}
 
+          {activePanel === 'news' && <NewsManager news={news} />}
+
           {activePanel === 'profile' && (
-            <div className="admin-module-window"><div className="admin-module-heading"><div><span>Public identity / 02</span><h2>Profile</h2></div><strong>01</strong></div><ProfileEditor profile={profile} privateContact={privateContact} /></div>
+            <div className="admin-module-window"><div className="admin-module-heading"><div><span>Public identity / 03</span><h2>Profile</h2></div><strong>03</strong></div><ProfileEditor profile={profile} privateContact={privateContact} /></div>
           )}
 
           {activePanel === 'about' && (
@@ -1007,7 +1040,7 @@ export default function AdminWorkspace({
           {activePanel === 'career' && (
             <div className="admin-module-window admin-experience-window">
               <div className="admin-module-heading">
-                <div><span>Career module / 05</span><h2>Career</h2></div>
+                <div><span>Career module / 06</span><h2>Career</h2></div>
                 <strong>{String(experienceCount).padStart(2, '0')}</strong>
               </div>
               <ExperienceEditor experiences={experiences} />
@@ -1015,11 +1048,11 @@ export default function AdminWorkspace({
           )}
 
           {activePanel === 'contact' && (
-            <MaintenancePanel label="Public channel / 06" title="Contact" index="06" />
+            <MaintenancePanel label="Public channel / 07" title="Contact" index="07" />
           )}
 
           {activePanel === 'security' && (
-            <MaintenancePanel label="Security module / 07" title="Security" index="07" />
+            <MaintenancePanel label="Security module / 08" title="Security" index="08" />
           )}
         </div>
       </div>

@@ -20,7 +20,6 @@ create table if not exists public.threads (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-
 create table if not exists public.thread_entries (
   id uuid primary key default gen_random_uuid(),
   thread_id uuid not null references public.threads (id) on delete cascade,
@@ -33,7 +32,6 @@ create table if not exists public.thread_entries (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-
 create table if not exists public.thread_media (
   id uuid primary key default gen_random_uuid(),
   entry_id uuid not null references public.thread_entries (id) on delete cascade,
@@ -43,21 +41,18 @@ create table if not exists public.thread_media (
   sort_order integer not null default 0,
   created_at timestamptz not null default now()
 );
-
 create index if not exists threads_destination_status_idx
   on public.threads (destination, status, featured desc, sort_order, updated_at desc);
 create index if not exists thread_entries_thread_idx
   on public.thread_entries (thread_id, status, sort_order, published_on desc);
 create index if not exists thread_media_entry_idx
   on public.thread_media (entry_id, sort_order);
-
 create trigger threads_set_updated_at
 before update on public.threads
 for each row execute function public.set_updated_at();
 create trigger thread_entries_set_updated_at
 before update on public.thread_entries
 for each row execute function public.set_updated_at();
-
 insert into public.threads (
   title, slug, destination, category, description, cover_media_reference,
   status, featured, sort_order, created_by, created_at, updated_at
@@ -77,7 +72,6 @@ select
   updated_at
 from public.journey_threads
 on conflict (slug) do nothing;
-
 insert into public.threads (
   title, slug, destination, category, description, technical_description,
   cover_media_reference, github_url, live_url, tags, status, featured,
@@ -102,7 +96,6 @@ select
   updated_at
 from public.projects
 on conflict (slug) do nothing;
-
 insert into public.thread_entries (
   thread_id, title, published_on, content, status, sort_order,
   created_by, created_at, updated_at
@@ -117,7 +110,6 @@ where not exists (
   select 1 from public.thread_entries e
   where e.thread_id = t.id and e.title = u.title and e.published_on = u.published_on
 );
-
 insert into public.thread_entries (
   thread_id, title, published_on, content, status, sort_order,
   created_by, created_at, updated_at
@@ -132,14 +124,11 @@ where not exists (
   select 1 from public.thread_entries e
   where e.thread_id = t.id and e.title = u.title and e.published_on = u.published_on
 );
-
 alter table public.threads enable row level security;
 alter table public.thread_entries enable row level security;
 alter table public.thread_media enable row level security;
-
 grant select on public.threads, public.thread_entries, public.thread_media to anon, authenticated;
 grant insert, update, delete on public.threads, public.thread_entries, public.thread_media to authenticated;
-
 create policy "Anyone can read published threads"
 on public.threads for select to anon, authenticated
 using (status = 'published');
@@ -150,7 +139,6 @@ create policy "Admins can manage threads"
 on public.threads for all to authenticated
 using ((select public.is_admin()))
 with check ((select public.is_admin()));
-
 create policy "Anyone can read published thread entries"
 on public.thread_entries for select to anon, authenticated
 using (
@@ -166,7 +154,6 @@ create policy "Admins can manage thread entries"
 on public.thread_entries for all to authenticated
 using ((select public.is_admin()))
 with check ((select public.is_admin()));
-
 create policy "Anyone can read published thread media"
 on public.thread_media for select to anon, authenticated
 using (exists (

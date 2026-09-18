@@ -1,3 +1,4 @@
+
 begin;
 
 -- Keep the existing content and feedback records. Each Journey subthread has one
@@ -96,3 +97,4 @@ grant execute on function public.save_journey_subthread(jsonb,jsonb,jsonb) to au
 
 notify pgrst,'reload schema';
 commit;
+;

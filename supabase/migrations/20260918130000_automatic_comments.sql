@@ -1,4 +1,3 @@
-begin;
 -- Public clients can vote, but only the trusted server may publish comments after external checks.
 alter function public.submit_entry_feedback(uuid,uuid,text,integer,text,text,uuid) rename to internal_submit_entry_feedback;
 revoke all on function public.internal_submit_entry_feedback(uuid,uuid,text,integer,text,text,uuid) from public,anon,authenticated;
@@ -42,4 +41,4 @@ $$;
 revoke all on function public.reserve_comment_check(uuid,uuid), public.publish_checked_comment(uuid,uuid,text,text,uuid) from public,anon,authenticated;
 grant execute on function public.reserve_comment_check(uuid,uuid), public.publish_checked_comment(uuid,uuid,text,text,uuid) to service_role;
 notify pgrst,'reload schema';
-commit;
+;

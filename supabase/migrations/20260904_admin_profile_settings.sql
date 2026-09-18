@@ -15,16 +15,12 @@ create table public.admin_contact_settings (
   timezone text not null default 'Europe/Stockholm' check (char_length(timezone) <= 64),
   updated_at timestamptz not null default now()
 );
-
 create trigger admin_contact_settings_set_updated_at
 before update on public.admin_contact_settings
 for each row execute function public.set_updated_at();
-
 alter table public.admin_contact_settings enable row level security;
-
 revoke all on table public.admin_contact_settings from anon, authenticated;
 grant select, insert, update on table public.admin_contact_settings to authenticated;
-
 create policy "Admins can read their private contact settings"
 on public.admin_contact_settings
 for select
@@ -33,7 +29,6 @@ using (
   user_id = (select auth.uid())
   and (select public.is_admin())
 );
-
 create policy "Admins can create their private contact settings"
 on public.admin_contact_settings
 for insert
@@ -42,7 +37,6 @@ with check (
   user_id = (select auth.uid())
   and (select public.is_admin())
 );
-
 create policy "Admins can update their private contact settings"
 on public.admin_contact_settings
 for update
@@ -55,7 +49,6 @@ with check (
   user_id = (select auth.uid())
   and (select public.is_admin())
 );
-
 -- One RPC saves the public identity and private contact settings atomically.
 create or replace function public.save_admin_profile(
   p_first_name text,
@@ -103,6 +96,5 @@ begin
     timezone = excluded.timezone;
 end;
 $$;
-
 revoke all on function public.save_admin_profile(text, text, text, text, text, text, text) from public;
 grant execute on function public.save_admin_profile(text, text, text, text, text, text, text) to authenticated;

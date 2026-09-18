@@ -1,13 +1,11 @@
 -- Adapt the existing entry_comments table. Preserve rows and their entry/reaction history.
 begin;
-
 alter table public.entry_comments add column parent_comment_id uuid
   references public.entry_comments(id) on delete cascade;
 alter table public.entry_comments add column moderation_reason text;
 alter table public.entry_comments add column updated_at timestamptz not null default now();
 create trigger entry_comments_set_updated_at before update on public.entry_comments
   for each row execute function public.set_updated_at();
-
 alter table public.entry_comments drop constraint entry_comments_status_check;
 update public.entry_comments set status = case status
   when 'approved' then 'published'
@@ -17,7 +15,6 @@ update public.entry_comments set status = case status
 where status in ('approved','hidden','spam');
 alter table public.entry_comments add constraint entry_comments_status_check
   check (status in ('pending','published','rejected'));
-
 -- One index covers entry lookup, visibility and chronological paging; avoid a
 -- second, overlapping index on entry_id. Keep the existing moderation index.
 drop index public.entry_comments_public_idx;
@@ -25,7 +22,6 @@ create index entry_comments_entry_status_created_idx
   on public.entry_comments(entry_id,status,created_at desc,id desc);
 create index entry_comments_parent_comment_idx
   on public.entry_comments(parent_comment_id) where parent_comment_id is not null;
-
 alter table public.entry_comments enable row level security;
 -- Public read access is column-limited: visitor_hash and request_id never leak.
 revoke select on public.entry_comments from anon, authenticated;
@@ -38,7 +34,6 @@ create policy "Published comments on visible entries" on public.entry_comments
   ));
 -- No public INSERT grant/policy. Existing admin UPDATE/DELETE policy remains.
 grant update (status, moderation_reason) on public.entry_comments to authenticated;
-
 -- Restore the AAL2 rule already specified by the repository migration and
 -- enforced in application routes; live is_admin had drifted to membership-only.
 create or replace function public.is_admin() returns boolean
@@ -48,7 +43,6 @@ language sql stable security definer set search_path='' as $$
 $$;
 revoke all on function public.is_admin() from public, anon;
 grant execute on function public.is_admin() to authenticated;
-
 create or replace function public.get_entry_feedback(
   p_entry uuid,p_visitor uuid default null,p_before timestamptz default null,p_before_id uuid default null
 ) returns jsonb language plpgsql stable security definer set search_path='' as $$
@@ -71,7 +65,6 @@ begin
   return result;
 end;
 $$;
-
 create or replace function public.publish_checked_comment(
   p_entry uuid,p_visitor uuid,p_name text,p_body text,p_request uuid
 ) returns jsonb language plpgsql security definer set search_path='' as $$
@@ -91,7 +84,6 @@ begin
   return public.get_entry_feedback(p_entry,p_visitor);
 end;
 $$;
-
 create or replace function public.admin_entry_stats(p_entries uuid[])
 returns table(entry_id uuid,likes bigint,dislikes bigint,comments bigint,pending bigint)
 language plpgsql stable security definer set search_path='' as $$
@@ -106,6 +98,5 @@ begin
     from public.thread_entries e where e.id=any(p_entries);
 end;
 $$;
-
 notify pgrst,'reload schema';
 commit;

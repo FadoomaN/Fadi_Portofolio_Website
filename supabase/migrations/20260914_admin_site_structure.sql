@@ -9,7 +9,6 @@ create table public.about_content (
   media_reference text,
   updated_at timestamptz not null default now()
 );
-
 create table public.public_contact_settings (
   id smallint primary key default 1 check (id = 1),
   email text,
@@ -18,7 +17,6 @@ create table public.public_contact_settings (
   cv_url text,
   updated_at timestamptz not null default now()
 );
-
 create table public.journey_threads (
   id uuid primary key default gen_random_uuid(),
   title text not null,
@@ -32,7 +30,6 @@ create table public.journey_threads (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-
 create table public.journey_updates (
   id uuid primary key default gen_random_uuid(),
   thread_id uuid not null references public.journey_threads (id) on delete cascade,
@@ -46,7 +43,6 @@ create table public.journey_updates (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-
 create table public.project_updates (
   id uuid primary key default gen_random_uuid(),
   project_id uuid not null references public.projects (id) on delete cascade,
@@ -60,12 +56,10 @@ create table public.project_updates (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-
 alter table public.projects
   add column if not exists technical_description text not null default '',
   add column if not exists github_url text,
   add column if not exists live_url text;
-
 create index journey_threads_public_feed_idx
   on public.journey_threads (featured desc, sort_order, created_at desc)
   where status = 'published';
@@ -75,7 +69,6 @@ create index journey_updates_public_feed_idx
 create index project_updates_public_feed_idx
   on public.project_updates (project_id, sort_order, published_on desc)
   where status = 'published';
-
 create trigger about_content_set_updated_at before update on public.about_content
 for each row execute function public.set_updated_at();
 create trigger public_contact_settings_set_updated_at before update on public.public_contact_settings
@@ -86,28 +79,23 @@ create trigger journey_updates_set_updated_at before update on public.journey_up
 for each row execute function public.set_updated_at();
 create trigger project_updates_set_updated_at before update on public.project_updates
 for each row execute function public.set_updated_at();
-
 alter table public.about_content enable row level security;
 alter table public.public_contact_settings enable row level security;
 alter table public.journey_threads enable row level security;
 alter table public.journey_updates enable row level security;
 alter table public.project_updates enable row level security;
-
 grant select on public.about_content, public.public_contact_settings, public.journey_threads,
   public.journey_updates, public.project_updates to anon, authenticated;
 grant insert, update, delete on public.about_content, public.public_contact_settings,
   public.journey_threads, public.journey_updates, public.project_updates to authenticated;
-
 create policy "Anyone can read about content" on public.about_content for select
   to anon, authenticated using (true);
 create policy "Admins manage about content" on public.about_content for all
   to authenticated using ((select public.is_admin())) with check ((select public.is_admin()));
-
 create policy "Anyone can read public contact" on public.public_contact_settings for select
   to anon, authenticated using (true);
 create policy "Admins manage public contact" on public.public_contact_settings for all
   to authenticated using ((select public.is_admin())) with check ((select public.is_admin()));
-
 create policy "Anyone can read published journey threads" on public.journey_threads for select
   to anon, authenticated using (status = 'published');
 create policy "Admins read all journey threads" on public.journey_threads for select
@@ -118,7 +106,6 @@ create policy "Admins update journey threads" on public.journey_threads for upda
   to authenticated using ((select public.is_admin())) with check ((select public.is_admin()));
 create policy "Admins delete journey threads" on public.journey_threads for delete
   to authenticated using ((select public.is_admin()));
-
 create policy "Anyone can read published journey updates" on public.journey_updates for select
   to anon, authenticated using (
     status = 'published' and exists (
@@ -130,7 +117,6 @@ create policy "Admins read all journey updates" on public.journey_updates for se
   to authenticated using ((select public.is_admin()));
 create policy "Admins manage journey updates" on public.journey_updates for all
   to authenticated using ((select public.is_admin())) with check ((select public.is_admin()));
-
 create policy "Anyone can read published project updates" on public.project_updates for select
   to anon, authenticated using (
     status = 'published' and exists (

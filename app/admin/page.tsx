@@ -39,6 +39,7 @@ export default async function AdminPage() {
     threadResult,
     categoryResult,
     privateContactResult,
+    newsResult,
   ] = await Promise.all([
     supabase
       .from('experiences')
@@ -60,6 +61,7 @@ export default async function AdminPage() {
       .select('operations_email, phone_number, timezone, updated_at')
       .eq('user_id', user.id)
       .maybeSingle(),
+    supabase.from('manual_news').select('id,slug,title,body,media_reference,media_alt,published_at,created_at,updated_at').order('updated_at',{ascending:false}),
   ]);
 
   return (
@@ -72,12 +74,13 @@ export default async function AdminPage() {
           threads={threadResult.data ?? []}
           categories={categoryResult.data ?? []}
           threadCount={threadResult.count ?? 0}
-          loadError={[experienceResult,profileResult,aboutResult,aboutSectionResult,contactResult,threadResult,categoryResult,privateContactResult].some(result => result.error) ? 'Some admin content could not be loaded. Refresh before editing missing records.' : undefined}
+          loadError={[experienceResult,profileResult,aboutResult,aboutSectionResult,contactResult,threadResult,categoryResult,privateContactResult,newsResult].some(result => result.error) ? 'Some admin content could not be loaded. Refresh before editing missing records.' : undefined}
           about={aboutResult.data}
           aboutSections={aboutSectionResult.data ?? []}
           publicContact={contactResult.data}
           profile={profileResult.data}
           privateContact={privateContactResult.data}
+          news={newsResult.data ?? []}
         />
       </main>
     </>
