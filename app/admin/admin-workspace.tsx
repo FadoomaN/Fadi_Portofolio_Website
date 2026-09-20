@@ -3,7 +3,9 @@
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ContentManager from './content-manager';
+import ProjectManager from './project-manager';
 import type { Thread } from '@/lib/content';
+import type { Project } from '@/lib/projects';
 
 type PanelId = 'overview' | 'news' | 'profile' | 'about' | 'threads' | 'career' | 'contact' | 'security';
 type NewsRecord = { id:string; slug:string; title:string; body:string; media_reference:string|null; media_alt:string|null; published_at:string; created_at:string; updated_at:string };
@@ -88,6 +90,7 @@ type AdminWorkspaceProps = {
   profile: ProfileRecord | null;
   privateContact: PrivateContactRecord | null;
   news: NewsRecord[];
+  projects: Project[];
 };
 
 type ExperienceFormState = {
@@ -905,8 +908,10 @@ export default function AdminWorkspace({
   profile,
   privateContact,
   news,
+  projects,
 }: AdminWorkspaceProps) {
   const [activePanel, setActivePanel] = useState<PanelId>('overview');
+  const [threadsView, setThreadsView] = useState<'journey' | 'projects'>('journey');
   const [compactMenuOpen, setCompactMenuOpen] = useState(false);
   const compactToggleRef = useRef<HTMLButtonElement>(null);
   const [hasUnsavedContent, setHasUnsavedContent] = useState(false);
@@ -914,6 +919,13 @@ export default function AdminWorkspace({
     const listener = (event: Event) => setHasUnsavedContent(Boolean((event as CustomEvent).detail));
     window.addEventListener('admin-dirty', listener);
     return () => window.removeEventListener('admin-dirty', listener);
+  }, []);
+  useEffect(() => {
+    const openProjects = () => { setActivePanel('threads'); setThreadsView('projects'); setCompactMenuOpen(false); };
+    window.addEventListener('open-projects', openProjects);
+    const openJourney = () => { setActivePanel('threads'); setThreadsView('journey'); setCompactMenuOpen(false); };
+    window.addEventListener('open-journey', openJourney);
+    return () => { window.removeEventListener('open-projects', openProjects); window.removeEventListener('open-journey', openJourney); };
   }, []);
   const activeItem = useMemo(
     () => menuItems.find((item) => item.id === activePanel) ?? menuItems[0],
@@ -980,7 +992,7 @@ export default function AdminWorkspace({
           </div>
         </header>
 
-        <div className="admin-window-view" key={activePanel}>
+        <div className="admin-window-view" key={`${activePanel}-${threadsView}`}>
           {loadError && <p role="alert" className="admin-profile-error">{loadError}</p>}
           {activePanel === 'overview' && (
             <div className="admin-overview-window">
@@ -1034,7 +1046,7 @@ export default function AdminWorkspace({
           )}
 
           {activePanel === 'threads' && (
-            <div className="admin-module-window admin-journey-window"><ContentManager initialThreads={threads} initialCategories={categories} /></div>
+            <div className="admin-module-window admin-journey-window">{threadsView === 'journey' ? <ContentManager initialThreads={threads} initialCategories={categories} /> : <ProjectManager initialProjects={projects} />}</div>
           )}
 
           {activePanel === 'career' && (

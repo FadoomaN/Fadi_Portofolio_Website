@@ -206,7 +206,7 @@ export default function ContentManager({initialThreads,initialCategories}:{initi
   const preview=kind==='thread'?`/journey/${draft.slug}`:`/journey/${thread?.slug}/${draft.slug}`;
   return <div className="journey-admin">
     <div className="journey-admin-toolbar">
-      <nav aria-label="Threads sections"><button type="button" aria-current="page" onClick={home}>Journey</button><button type="button" disabled aria-label="Projects temporarily unavailable">Projects</button></nav>
+      <nav aria-label="Threads sections"><button type="button" aria-current="page" onClick={home}>Journey</button><button type="button" className="journey-admin-projects-link" aria-disabled={false} onClick={()=>window.dispatchEvent(new Event('open-projects'))}>Projects</button></nav>
       {thread&&<div className="journey-admin-location"><button type="button" onClick={()=>openThread(thread)}>{thread.title}</button>{kind==='subthread'&&<><span>/</span><span>{draft.title||'New subthread'}</span></>}</div>}
       {kind&&<button type="button" onClick={home}>All threads</button>}
     </div>

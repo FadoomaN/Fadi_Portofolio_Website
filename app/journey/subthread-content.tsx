@@ -2,6 +2,8 @@ import type { EntryMedia } from '@/lib/content';
 import { safeReference } from '@/lib/content';
 
 export function SubthreadMedia({ media }: { media: EntryMedia }) {
+  // Preserve stored video data for a later release, but keep video unavailable publicly for now.
+  if (media.media_type === 'video' || media.media_type === 'external-video') return null;
   const source = safeReference(media.media_reference);
   if (!source) return null;
   return <figure className={`journey-entry-media is-${media.media_shape}`}>

@@ -6,6 +6,11 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 type Activity = { id:string; event_type:'thread_updated'|'subthread_updated'|'subthread_published'; thread_title:string; thread_slug:string; subthread_title:string|null; subthread_slug:string|null; media_reference:string|null; media_position_x:number; media_position_y:number; created_at:string };
 type News = { id:string; slug:string; title:string; body:string; media_reference:string|null; media_alt:string|null; published_at:string };
 
+function newsExcerpt(body: string, limit = 140) {
+  const compact = body.replace(/\s+/g, ' ').trim();
+  return compact.length > limit ? `${compact.slice(0, limit).trimEnd()}…` : compact;
+}
+
 export default async function Home() {
   const supabase = await createServerSupabaseClient();
   const [{ data: storedProfile }, { data: activityRows }, { data: newsRows }] = await Promise.all([
@@ -30,7 +35,7 @@ export default async function Home() {
       href:item.subthread_slug?`/journey/${item.thread_slug}/${item.subthread_slug}`:`/journey/${item.thread_slug}`,
       action:item.subthread_slug?'VIEW SUBTHREAD':'VIEW THREAD', body:null, mediaAlt:null,
     })),
-    ...((newsRows ?? []) as News[]).map((item) => ({ ...item, kind:'news' as const, date:item.published_at, label:'NEWS', href:`/news/${item.slug}`, action:'READ NOTE', mediaAlt:item.media_alt })),
+    ...((newsRows ?? []) as News[]).map((item) => ({ ...item, kind:'news' as const, date:item.published_at, label:'NEWS', href:`/news/${item.slug}`, action:'READ NOTE', excerpt:newsExcerpt(item.body), mediaAlt:item.media_alt })),
   ].sort((a,b)=>Date.parse(b.date)-Date.parse(a.date)).slice(0,8);
 
   return (
@@ -110,7 +115,12 @@ export default async function Home() {
         <div className="home-section-label"><span>02 / NEWS &amp; UPDATES</span><i aria-hidden="true" /></div>
         <div className="updates-heading"><h2 id="updates-title">NEWS &amp; UPDATES</h2><p>Notes from the platform, the workshop and the work in progress.</p></div>
         <div className="updates-feed">
-          {updates.map((item) => <article className={`update-item${item.media_reference ? ' update-item-media' : ''}`} key={`${item.kind}-${item.id}`}><time>{new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Europe/Stockholm'}).format(new Date(item.date)).replace(',',' ·')}<b>CET</b></time><div><small>{item.label}</small><h3>{item.title}</h3>{item.kind==='news'&&item.body&&<p>{item.body}</p>}</div>{item.media_reference&&<img className="update-image" src={item.media_reference} alt={item.mediaAlt ?? ''} style={item.kind === 'activity' ? { objectPosition: `${item.media_position_x}% ${item.media_position_y}%` } : undefined} />}<a className="update-action" href={item.href}>{item.action} <span aria-hidden="true">↗</span></a><span className="update-node" aria-hidden="true" /></article>)}
+          {updates.map((item) => <article className={`update-item${item.media_reference ? ' update-item-media' : ''}`} key={`${item.kind}-${item.id}`}>
+            <time>{new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Europe/Stockholm'}).format(new Date(item.date)).replace(',',' ·')}<b>CET</b></time>
+            <div className="update-copy"><small>{item.label}</small><h3>{item.title}</h3>{item.kind==='news'&&item.excerpt&&<p>{item.excerpt}</p>}</div>
+            {item.media_reference&&<img className="update-image" src={item.media_reference} alt={item.mediaAlt ?? ''} style={item.kind === 'activity' ? { objectPosition: `${item.media_position_x}% ${item.media_position_y}%` } : undefined} />}
+            <a className="update-action" href={item.href}>{item.action} <span aria-hidden="true">↗</span></a>
+          </article>)}
           {!updates.length&&<p className="updates-empty">No published updates yet.</p>}
         </div>
        </section>

@@ -40,6 +40,7 @@ export default async function AdminPage() {
     categoryResult,
     privateContactResult,
     newsResult,
+    projectsResult,
   ] = await Promise.all([
     supabase
       .from('experiences')
@@ -62,6 +63,7 @@ export default async function AdminPage() {
       .eq('user_id', user.id)
       .maybeSingle(),
     supabase.from('manual_news').select('id,slug,title,body,media_reference,media_alt,published_at,created_at,updated_at').order('updated_at',{ascending:false}),
+    supabase.from('threads').select('id,title,slug,category,description,cover_media_reference,cover_position_x,cover_position_y,tags,status,featured,sort_order,updated_at,created_at,project_version,project_started_on,project_progress,project_repository,project_license,project_milestone,project_team,github_url,live_url').eq('destination','projects').order('updated_at',{ascending:false}),
   ]);
 
   return (
@@ -74,13 +76,14 @@ export default async function AdminPage() {
           threads={threadResult.data ?? []}
           categories={categoryResult.data ?? []}
           threadCount={threadResult.count ?? 0}
-          loadError={[experienceResult,profileResult,aboutResult,aboutSectionResult,contactResult,threadResult,categoryResult,privateContactResult,newsResult].some(result => result.error) ? 'Some admin content could not be loaded. Refresh before editing missing records.' : undefined}
+          loadError={[experienceResult,profileResult,aboutResult,aboutSectionResult,contactResult,threadResult,categoryResult,privateContactResult,newsResult,projectsResult].some(result => result.error) ? 'Some admin content could not be loaded. Refresh before editing missing records.' : undefined}
           about={aboutResult.data}
           aboutSections={aboutSectionResult.data ?? []}
           publicContact={contactResult.data}
           profile={profileResult.data}
           privateContact={privateContactResult.data}
           news={newsResult.data ?? []}
+          projects={projectsResult.data ?? []}
         />
       </main>
     </>

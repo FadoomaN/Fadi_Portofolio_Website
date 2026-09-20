@@ -49,5 +49,5 @@ export function sameOrigin(request: Request) {
     'https://www.fadialhazim.com',
   ]);
 
-  return allowedOrigins.has(origin);
+  return allowedOrigins.has(origin) || origin === new URL(request.url).origin;
 }
