@@ -27,7 +27,7 @@ export async function POST(request:NextRequest){
   if(!SLUG.test(slug))return json({error:'A valid URL slug is required.'},400);
   if(!['draft','published'].includes(status))return json({error:'Choose Draft or Published visibility.'},400);
   if(!Array.isArray(blocks))return json({error:'Project blocks are invalid.'},400);
-  const invalidBlock=blocks.find((block,index)=>{const item=block as Record<string,unknown>;const data=item?.data as Record<string,unknown>|undefined;if(!item||!data)return true;if(item.type==='code')return !text(data.code,50000)||!text(data.language,30);if(item.type==='image')return !safeReference(text(data.mediaReference,2000));return false;});
+  const invalidBlock=blocks.find((block)=>{const item=block as Record<string,unknown>;const data=item?.data as Record<string,unknown>|undefined;if(!item||!data)return true;if(item.type==='code')return !text(data.code,50000)||!text(data.language,30);if(item.type==='image')return !safeReference(text(data.mediaReference,2000));return false;});
   if(invalidBlock){const index=blocks.indexOf(invalidBlock);const type=(invalidBlock as Record<string,unknown>).type==='code'?'CODE':'IMAGE';return json({error:`${type} block #${index+1} is incomplete.`},400);}
   if(!validProjectBlocks(blocks))return json({error:'One or more project blocks have invalid data.'},400);
   if(cover&&!safeReference(cover))return json({error:'Cover image reference is invalid.'},400);

@@ -912,9 +912,12 @@ export default function AdminWorkspace({
 }: AdminWorkspaceProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [activePanel, setActivePanel] = useState<PanelId>('overview');
-  const [threadsView, setThreadsView] = useState<'journey' | 'projects'>('journey');
-  useEffect(() => { const segment=pathname.split('/').filter(Boolean); const panel=(segment[0]||'overview') as PanelId; setActivePanel(menuItems.some(item=>item.id===panel)?panel:'overview'); if(panel==='threads') setThreadsView(segment[1]==='projects'?'projects':'journey'); }, [pathname]);
+  const pathSegments = pathname.split('/').filter(Boolean);
+  const requestedPanel = (pathSegments[0] || 'overview') as PanelId;
+  const activePanel = menuItems.some((item) => item.id === requestedPanel)
+    ? requestedPanel
+    : 'overview';
+  const threadsView = pathSegments[1] === 'projects' ? 'projects' : 'journey';
   const [compactMenuOpen, setCompactMenuOpen] = useState(false);
   const compactToggleRef = useRef<HTMLButtonElement>(null);
   const [hasUnsavedContent, setHasUnsavedContent] = useState(false);
@@ -930,13 +933,10 @@ export default function AdminWorkspace({
     window.addEventListener('open-journey', openJourney);
     return () => { window.removeEventListener('open-projects', openProjects); window.removeEventListener('open-journey', openJourney); };
   }, [router]);
-  const activeItem = useMemo(
-    () => menuItems.find((item) => item.id === activePanel) ?? menuItems[0],
-    [activePanel],
-  );
+  const activeItem = menuItems.find((item) => item.id === activePanel) ?? menuItems[0];
   const choosePanel = (id: PanelId) => {
     if (id !== activePanel && hasUnsavedContent && !window.confirm('Discard unsaved content changes?')) return;
-    setActivePanel(id);
+    router.push(id === 'overview' ? '/' : `/${id}`);
     setCompactMenuOpen(false);
   };
 

@@ -146,6 +146,9 @@ export default function ExperienceTimeline({
   }, [activeExperience, activeIndex]);
 
   useLayoutEffect(() => {
+    // The trace geometry depends on the rendered block and sticky panel bounds,
+    // so the first measurement must run after layout rather than during render.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     updateBoardTrace();
 
     const board = boardRef.current;

@@ -6,8 +6,13 @@ import type {
   Project,
   ProjectBlock,
   ProjectBlockType,
+  ProjectVisibility,
 } from "@/lib/projects";
-import { PROJECT_BLOCK_TYPES } from "@/lib/projects";
+import {
+  PROJECT_BLOCK_DEFAULTS,
+  PROJECT_BLOCK_TYPES,
+  PROJECT_CODE_LANGUAGES,
+} from "@/lib/projects";
 import ProjectCodeEditor from "./project-code-editor";
 import ProjectRichTextEditor from "./project-rich-text-editor";
 
@@ -24,7 +29,7 @@ type Form = {
   coverPositionY: number;
   repository: string;
   progress: string | number;
-  status: "draft" | "published";
+  status: ProjectVisibility;
   blocks: ProjectBlock[];
 };
 type LogForm = {
@@ -37,7 +42,7 @@ type LogForm = {
   summary: string;
   content: string;
   githubUrl: string;
-  status: "draft" | "published";
+  status: ProjectVisibility;
 };
 const clamp = (value: unknown) =>
   Math.max(0, Math.min(100, Number(value) || 0));
@@ -68,57 +73,6 @@ const blankLog = (): LogForm => ({
   githubUrl: "",
   status: "draft",
 });
-const defaults: Record<ProjectBlockType, Record<string, unknown>> = {
-  title: { title: "Section title", subtitle: "", size: "large" },
-  text: {
-    text: "",
-    richText: { type: "doc", content: [{ type: "paragraph" }] },
-  },
-  code: {
-    language: "cpp",
-    filename: "",
-    code: "",
-    caption: "",
-    lineNumbers: false,
-  },
-  image: {
-    mediaReference: "",
-    alt: "",
-    caption: "",
-    positionX: 50,
-    positionY: 50,
-    fit: "contain",
-  },
-  milestone: { title: "", description: "", status: "PLANNED", targetDate: "" },
-  divider: { label: "" },
-  github_code: {
-    repo: "",
-    path: "",
-    ref: "main",
-    startLine: 1,
-    endLine: 100,
-    language: "cpp",
-    lineNumbers: false,
-  },
-  github_activity: { repo: "" },
-};
-const langs = [
-  "c",
-  "cpp",
-  "csharp",
-  "java",
-  "javascript",
-  "typescript",
-  "python",
-  "sql",
-  "bash",
-  "json",
-  "html",
-  "css",
-  "rust",
-  "go",
-  "other",
-];
 const toForm = (p: Project, blocks: ProjectBlock[] = []): Form => ({
   title: p.title,
   slug: p.slug,
@@ -296,7 +250,7 @@ export default function ProjectManager({
       ...c,
       blocks: normalize([
         ...c.blocks,
-        { type, sort_order: c.blocks.length, data: defaults[type] },
+        { type, sort_order: c.blocks.length, data: PROJECT_BLOCK_DEFAULTS[type] },
       ]),
     }));
   const reorder = (from: number, to: number) =>
@@ -468,7 +422,7 @@ export default function ProjectManager({
                 value={String(b.data.language ?? "other")}
                 onChange={(e) => updateData(i, "language", e.target.value)}
               >
-                {langs.map((language) => (
+                {PROJECT_CODE_LANGUAGES.map((language) => (
                   <option key={language}>{language}</option>
                 ))}
               </select>
@@ -516,7 +470,7 @@ export default function ProjectManager({
             value={String(value)}
             onChange={(e) => updateData(i, key, e.target.value)}
           >
-            {langs.map((x) => (
+            {PROJECT_CODE_LANGUAGES.map((x) => (
               <option key={x}>{x}</option>
             ))}
           </select>
@@ -809,7 +763,8 @@ export default function ProjectManager({
                         onClick={() =>
                           setCollapsed((c) => {
                             const n = new Set(c);
-                            n.has(index) ? n.delete(index) : n.add(index);
+                            if (n.has(index)) n.delete(index);
+                            else n.add(index);
                             return n;
                           })
                         }
