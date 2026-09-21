@@ -1,13 +1,11 @@
 'use client';
 
 import { useRef } from 'react';
-import { useRouter } from 'next/navigation';
 
 const REQUIRED_CLICKS = 3;
 const CLICK_WINDOW_MS = 2000;
 
 export default function SecretBrand({ label }: { label: string }) {
-  const router = useRouter();
   const recentClicks = useRef<number[]>([]);
 
   const handleBrandClick = () => {
@@ -20,7 +18,7 @@ export default function SecretBrand({ label }: { label: string }) {
 
     if (recentClicks.current.length >= REQUIRED_CLICKS) {
       recentClicks.current = [];
-      router.push('/login');
+      window.location.assign('https://admin.fadialhazim.com');
     }
   };
 

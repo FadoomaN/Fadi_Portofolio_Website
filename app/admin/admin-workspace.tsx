@@ -1,7 +1,7 @@
 'use client';
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import ContentManager from './content-manager';
 import ProjectManager from './project-manager';
 import type { Thread } from '@/lib/content';
@@ -910,8 +910,11 @@ export default function AdminWorkspace({
   news,
   projects,
 }: AdminWorkspaceProps) {
+  const router = useRouter();
+  const pathname = usePathname();
   const [activePanel, setActivePanel] = useState<PanelId>('overview');
   const [threadsView, setThreadsView] = useState<'journey' | 'projects'>('journey');
+  useEffect(() => { const segment=pathname.split('/').filter(Boolean); const panel=(segment[0]||'overview') as PanelId; setActivePanel(menuItems.some(item=>item.id===panel)?panel:'overview'); if(panel==='threads') setThreadsView(segment[1]==='projects'?'projects':'journey'); }, [pathname]);
   const [compactMenuOpen, setCompactMenuOpen] = useState(false);
   const compactToggleRef = useRef<HTMLButtonElement>(null);
   const [hasUnsavedContent, setHasUnsavedContent] = useState(false);
@@ -921,12 +924,12 @@ export default function AdminWorkspace({
     return () => window.removeEventListener('admin-dirty', listener);
   }, []);
   useEffect(() => {
-    const openProjects = () => { setActivePanel('threads'); setThreadsView('projects'); setCompactMenuOpen(false); };
+    const openProjects = () => { router.push('/threads/projects'); setCompactMenuOpen(false); };
     window.addEventListener('open-projects', openProjects);
-    const openJourney = () => { setActivePanel('threads'); setThreadsView('journey'); setCompactMenuOpen(false); };
+    const openJourney = () => { router.push('/threads/journey'); setCompactMenuOpen(false); };
     window.addEventListener('open-journey', openJourney);
     return () => { window.removeEventListener('open-projects', openProjects); window.removeEventListener('open-journey', openJourney); };
-  }, []);
+  }, [router]);
   const activeItem = useMemo(
     () => menuItems.find((item) => item.id === activePanel) ?? menuItems[0],
     [activePanel],
