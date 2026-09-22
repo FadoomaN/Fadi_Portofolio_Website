@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import SiteHeader from '../site-header';
 import AuthenticatorGate from './authenticator-gate';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
@@ -23,11 +22,10 @@ export default async function AuthenticatorPage() {
   ]);
   const verifiedFactor = factors?.totp.find((factor) => factor.status === 'verified');
 
-  if (verifiedFactor && assurance?.currentLevel === 'aal2') redirect('/admin');
+  if (verifiedFactor && assurance?.currentLevel === 'aal2') redirect('/');
 
   return (
     <>
-      <SiteHeader revealImmediately />
       <main className="security-canvas">
         <AuthenticatorGate factorId={verifiedFactor?.id ?? null} />
       </main>

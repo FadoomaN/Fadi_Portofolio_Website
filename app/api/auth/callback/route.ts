@@ -4,10 +4,10 @@ import { getSupabaseEnv } from '@/lib/supabase/env';
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code');
-  const requestedNext = request.nextUrl.searchParams.get('next') ?? '/admin';
+  const requestedNext = request.nextUrl.searchParams.get('next') ?? '/';
   const safeNext = requestedNext.startsWith('/') && !requestedNext.startsWith('//')
     ? requestedNext
-    : '/admin';
+    : '/';
   const response = NextResponse.redirect(new URL(safeNext, request.url));
 
   if (!code) {

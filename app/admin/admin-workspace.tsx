@@ -1,7 +1,7 @@
 'use client';
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import ContentManager from './content-manager';
 import ProjectManager from './project-manager';
 import type { Thread } from '@/lib/content';
@@ -910,8 +910,14 @@ export default function AdminWorkspace({
   news,
   projects,
 }: AdminWorkspaceProps) {
-  const [activePanel, setActivePanel] = useState<PanelId>('overview');
-  const [threadsView, setThreadsView] = useState<'journey' | 'projects'>('journey');
+  const router = useRouter();
+  const pathname = usePathname();
+  const pathSegments = pathname.split('/').filter(Boolean);
+  const requestedPanel = (pathSegments[0] || 'overview') as PanelId;
+  const activePanel = menuItems.some((item) => item.id === requestedPanel)
+    ? requestedPanel
+    : 'overview';
+  const threadsView = pathSegments[1] === 'projects' ? 'projects' : 'journey';
   const [compactMenuOpen, setCompactMenuOpen] = useState(false);
   const compactToggleRef = useRef<HTMLButtonElement>(null);
   const [hasUnsavedContent, setHasUnsavedContent] = useState(false);
@@ -921,19 +927,16 @@ export default function AdminWorkspace({
     return () => window.removeEventListener('admin-dirty', listener);
   }, []);
   useEffect(() => {
-    const openProjects = () => { setActivePanel('threads'); setThreadsView('projects'); setCompactMenuOpen(false); };
+    const openProjects = () => { router.push('/threads/projects'); setCompactMenuOpen(false); };
     window.addEventListener('open-projects', openProjects);
-    const openJourney = () => { setActivePanel('threads'); setThreadsView('journey'); setCompactMenuOpen(false); };
+    const openJourney = () => { router.push('/threads/journey'); setCompactMenuOpen(false); };
     window.addEventListener('open-journey', openJourney);
     return () => { window.removeEventListener('open-projects', openProjects); window.removeEventListener('open-journey', openJourney); };
-  }, []);
-  const activeItem = useMemo(
-    () => menuItems.find((item) => item.id === activePanel) ?? menuItems[0],
-    [activePanel],
-  );
+  }, [router]);
+  const activeItem = menuItems.find((item) => item.id === activePanel) ?? menuItems[0];
   const choosePanel = (id: PanelId) => {
     if (id !== activePanel && hasUnsavedContent && !window.confirm('Discard unsaved content changes?')) return;
-    setActivePanel(id);
+    router.push(id === 'overview' ? '/' : `/${id}`);
     setCompactMenuOpen(false);
   };
 

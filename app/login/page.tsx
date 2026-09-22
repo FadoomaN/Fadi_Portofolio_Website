@@ -1,4 +1,3 @@
-import SiteHeader from '../site-header';
 import LoginForm from './login-form';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
@@ -14,12 +13,11 @@ export default async function LoginPage() {
       .eq('user_id', user.id)
       .maybeSingle();
 
-    if (membership) redirect('/admin');
+    if (membership) redirect('/');
   }
 
   return (
     <>
-      <SiteHeader revealImmediately />
       <main className="login-canvas" aria-label="Administrator login">
         <div className="auth-blueprint" aria-hidden="true">
           {/* One technical field fills the canvas; the login panel stays visually quiet above it. */}

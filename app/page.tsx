@@ -2,6 +2,8 @@ import SiteHeader from './site-header';
 import LifeCpu from './life-cpu';
 import { siteContent } from './site-content';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { headers } from 'next/headers';
+import AdminScreen from './admin/admin-screen';
 
 type Activity = { id:string; event_type:'thread_updated'|'subthread_updated'|'subthread_published'; thread_title:string; thread_slug:string; subthread_title:string|null; subthread_slug:string|null; media_reference:string|null; media_position_x:number; media_position_y:number; created_at:string };
 type News = { id:string; slug:string; title:string; body:string; media_reference:string|null; media_alt:string|null; published_at:string };
@@ -12,6 +14,8 @@ function newsExcerpt(body: string, limit = 140) {
 }
 
 export default async function Home() {
+  const host = (await headers()).get('host')?.split(':')[0];
+  if (host === 'admin.fadialhazim.com') return <AdminScreen />;
   const supabase = await createServerSupabaseClient();
   const [{ data: storedProfile }, { data: activityRows }, { data: newsRows }] = await Promise.all([
     supabase.from('site_profile').select('first_name, last_name, role, kicker, portrait_media_reference, portrait_alt, portrait_object_position').eq('id', 1).maybeSingle(),
