@@ -10,6 +10,9 @@ import type {
 import { PROJECT_BLOCK_TYPES } from "@/lib/projects";
 import ProjectCodeEditor from "./project-code-editor";
 import ProjectRichTextEditor from "./project-rich-text-editor";
+import ProjectBlockEditor, {
+  DEVLOG_BLOCK_TYPES,
+} from "./project-block-editor";
 
 type Form = {
   title: string;
@@ -36,6 +39,7 @@ type LogForm = {
   tag: string;
   summary: string;
   content: string;
+  blocks: ProjectBlock[];
   githubUrl: string;
   status: "draft" | "published";
 };
@@ -65,6 +69,7 @@ const blankLog = (): LogForm => ({
   tag: "",
   summary: "",
   content: "",
+  blocks: [],
   githubUrl: "",
   status: "draft",
 });
@@ -144,6 +149,18 @@ const logForm = (x: DevLogEntry): LogForm => ({
   tag: x.tag ?? "",
   summary: x.summary,
   content: x.content,
+  blocks:
+    x.blocks?.length
+      ? x.blocks
+      : x.content.trim()
+        ? [
+            {
+              type: "text",
+              sort_order: 0,
+              data: { text: x.content },
+            },
+          ]
+        : [],
   githubUrl: x.github_url ?? "",
   status: x.status,
 });
@@ -760,117 +777,11 @@ export default function ProjectManager({
                 </select>
               </label>
             </fieldset>
-            <div className="project-admin-toolbar">
-              {PROJECT_BLOCK_TYPES.map((type) => (
-                <button type="button" key={type} onClick={() => add(type)}>
-                  + {type.replace("_", " ").toUpperCase()}
-                </button>
-              ))}
-              <button type="button" disabled>
-                VIDEO — COMING SOON
-              </button>
-            </div>
-            <section
-              className="project-admin-blocks"
-              aria-label="Article blocks"
-            >
-              {form.blocks.map((block, index) => {
-                const closed = collapsed.has(index);
-                return (
-                  <article
-                    key={`${block.id ?? block.type}-${index}`}
-                    onDragOver={(e: DragEvent) => {
-                      e.preventDefault();
-                      setDrop(index);
-                    }}
-                    onDrop={() => {
-                      if (drag !== null) reorder(drag, index);
-                      setDrag(null);
-                      setDrop(null);
-                    }}
-                    className={`${drop === index && drag !== index ? "is-drop-target " : ""}${closed ? "is-collapsed" : ""}`}
-                  >
-                    <header>
-                      <span
-                        draggable
-                        onDragStart={() => setDrag(index)}
-                        aria-label="Drag to reorder"
-                      >
-                        ⋮⋮
-                      </span>
-                      <small>
-                        BLOCK / {block.type.replace("_", " ").toUpperCase()}
-                      </small>
-                      <strong>{summary(block)}</strong>
-                      <button
-                        className="project-block-collapse"
-                        type="button"
-                        aria-expanded={!closed}
-                        onClick={() =>
-                          setCollapsed((c) => {
-                            const n = new Set(c);
-                            n.has(index) ? n.delete(index) : n.add(index);
-                            return n;
-                          })
-                        }
-                      >
-                        {closed ? "+" : "−"}
-                      </button>
-                    </header>
-                    <div className="project-block-body">
-                      <div>{fields(block, index)}</div>
-                    </div>
-                    <footer>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setForm((c) => ({
-                            ...c,
-                            blocks: normalize([
-                              ...c.blocks.slice(0, index + 1),
-                              {
-                                ...block,
-                                id: undefined,
-                                data: { ...block.data },
-                              },
-                              ...c.blocks.slice(index + 1),
-                            ]),
-                          }))
-                        }
-                      >
-                        Duplicate
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => reorder(index, index - 1)}
-                      >
-                        ↑ Move up
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => reorder(index, index + 1)}
-                      >
-                        ↓ Move down
-                      </button>
-                      <button
-                        className="project-delete"
-                        type="button"
-                        onClick={() =>
-                          setForm((c) => ({
-                            ...c,
-                            blocks: normalize(
-                              c.blocks.filter((_, i) => i !== index),
-                            ),
-                          }))
-                        }
-                      >
-                        Delete
-                      </button>
-                    </footer>
-                  </article>
-                );
-              })}
-            </section>
+            <ProjectBlockEditor
+              blocks={form.blocks}
+              types={PROJECT_BLOCK_TYPES}
+              onChange={(blocks) => setForm((current) => ({ ...current, blocks }))}
+            />
             <section className="project-admin-devlogs">
               <header>
                 <small>DEVELOPMENT LOG</small>
@@ -994,19 +905,6 @@ export default function ProjectManager({
                     />
                   </label>
                   <label className="wide">
-                    Full content
-                    <textarea
-                      rows={9}
-                      value={editingLog.content}
-                      onChange={(e) =>
-                        setEditingLog({
-                          ...editingLog,
-                          content: e.target.value,
-                        })
-                      }
-                    />
-                  </label>
-                  <label className="wide">
                     GitHub reference URL
                     <input
                       value={editingLog.githubUrl}
@@ -1018,6 +916,17 @@ export default function ProjectManager({
                       }
                     />
                   </label>
+                  <div className="wide project-admin-log-blocks">
+                    <strong>DEV LOG CONTENT</strong>
+                    <ProjectBlockEditor
+                      ariaLabel="Dev log content blocks"
+                      blocks={editingLog.blocks}
+                      types={DEVLOG_BLOCK_TYPES}
+                      onChange={(blocks) =>
+                        setEditingLog({ ...editingLog, blocks })
+                      }
+                    />
+                  </div>
                   <div>
                     <button type="button" onClick={() => void saveLog()}>
                       SAVE DEV LOG
@@ -1048,7 +957,8 @@ export default function ProjectManager({
                   RESET CHANGES
                 </button>
                 <button type="button" onClick={() => void save(form.status)}>
-                  {form.status === "published"
+                  {savedForm.status !== "published" &&
+                  form.status === "published"
                     ? "PUBLISH PROJECT"
                     : "SAVE PROJECT"}
                 </button>

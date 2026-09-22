@@ -760,6 +760,20 @@
 .project-admin-blocks .project-block-body > div {
   grid-column: 1/-1;
 }
+.project-admin-log-form > .project-admin-log-blocks {
+  display: block;
+  min-width: 0;
+}
+.project-admin-log-blocks > strong {
+  display: block;
+  margin-bottom: 0.75rem;
+}
+.project-admin-log-blocks .project-admin-toolbar {
+  margin-inline: 0;
+}
+.project-admin-log-blocks .project-admin-blocks {
+  padding-inline: 0;
+}
 .project-admin-save {
   left: 0;
   right: 0;
