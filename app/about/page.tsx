@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import SiteHeader from '../site-header';
 import CircuitDivider from '../circuit-divider';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { headers } from 'next/headers';
+import AdminScreen from '../admin/admin-screen';
 
 export const metadata: Metadata = {
   title: 'About — Fadi Al Hazim',
@@ -9,6 +11,8 @@ export const metadata: Metadata = {
 };
 
 export default async function AboutPage() {
+  const host = (await headers()).get('host')?.split(':')[0];
+  if (host === 'admin.fadialhazim.com') return <AdminScreen />;
   const supabase = await createServerSupabaseClient();
   const [{ data }, { data: storedSections }] = await Promise.all([
     supabase.from('about_content').select('intro').eq('id', 1).maybeSingle(),

@@ -7,6 +7,9 @@ const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const STATUSES = new Set(['draft', 'published', 'archived']);
 const DESTINATIONS = new Set(['journey', 'projects']);
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE = /^\+[1-9]\d{7,14}$/;
+const URL = /^https:\/\/.+/;
 
 function text(value: unknown) {
   return typeof value === 'string' ? value.trim() : '';
@@ -91,15 +94,27 @@ export async function POST(request: NextRequest) {
   }
 
   if (kind === 'contact') {
+    const email = text(body.email).toLowerCase();
+    const phoneNumber = text(body.phoneNumber).replace(/[\s()-]/g, '');
+    const githubUrl = text(body.githubUrl);
+    const linkedinUrl = text(body.linkedinUrl);
+    const cvUrl = text(body.cvUrl);
+    if ((email && (!EMAIL.test(email) || email.length > 254)) || (phoneNumber && !PHONE.test(phoneNumber)) || [githubUrl, linkedinUrl, cvUrl].some((url) => url && !URL.test(url)) || typeof body.showEmail !== 'boolean' || typeof body.showPhone !== 'boolean') {
+      return NextResponse.json({ error: 'Check the public contact details and visibility settings.' }, { status: 400 });
+    }
     const record = {
       id: 1,
-      email: text(body.email) || null,
-      github_url: text(body.githubUrl) || null,
-      linkedin_url: text(body.linkedinUrl) || null,
-      cv_url: text(body.cvUrl) || null,
+      email: email || null,
+      phone_number: phoneNumber || null,
+      show_email: body.showEmail,
+      show_phone: body.showPhone,
+      github_url: githubUrl || null,
+      linkedin_url: linkedinUrl || null,
+      cv_url: cvUrl || null,
     };
     const { data, error } = await auth.supabase.from('public_contact_settings').upsert(record).select().single();
     if (error) return NextResponse.json({ error: 'Public contact settings could not be saved.' }, { status: 500 });
+    revalidatePath('/contact');
     return NextResponse.json({ ok: true, record: data });
   }
 

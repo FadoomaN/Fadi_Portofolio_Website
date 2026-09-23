@@ -3,6 +3,8 @@ import SiteHeader from '../site-header';
 import CircuitDivider from '../circuit-divider';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import ContactForm from './contact-form';
+import { headers } from 'next/headers';
+import AdminScreen from '../admin/admin-screen';
 
 export const metadata: Metadata = {
   title: 'Contact — Fadi Al Hazim',
@@ -10,12 +12,13 @@ export const metadata: Metadata = {
 };
 
 export default async function ContactPage() {
+  const host = (await headers()).get('host')?.split(':')[0];
+  if (host === 'admin.fadialhazim.com') return <AdminScreen />;
   const { data } = await (await createServerSupabaseClient())
     .from('public_contact_settings')
-    .select('email, github_url, linkedin_url, cv_url')
+    .select('email, phone_number, show_email, show_phone, github_url, linkedin_url, cv_url')
     .eq('id', 1)
     .maybeSingle();
-  const contactEmail = data?.email ?? 'fadi.alhazeembest2017@gmail.com';
   return (
     <>
       <SiteHeader revealImmediately activeHref="/contact" />
@@ -26,7 +29,8 @@ export default async function ContactPage() {
           <h1 id="contact-title">CONTACT</h1>
           <p className="placeholder-copy">Have a project, technical question, or professional opportunity in mind? Send a message and I will get back to you.</p>
           <div className="placeholder-links">
-            <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
+            {data?.show_email && data.email && <a href={`mailto:${data.email}`}>{data.email}</a>}
+            {data?.show_phone && data.phone_number && <a href={`tel:${data.phone_number}`}>{data.phone_number}</a>}
             {data?.github_url && <a href={data.github_url}>GitHub</a>}
             {data?.linkedin_url && <a href={data.linkedin_url}>LinkedIn</a>}
             {data?.cv_url && <a href={data.cv_url}>CV / Resume</a>}

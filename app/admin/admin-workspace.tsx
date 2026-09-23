@@ -40,6 +40,9 @@ type AboutSectionRecord = {
 type PublicContactRecord = {
   id: number;
   email: string | null;
+  phone_number: string | null;
+  show_email: boolean;
+  show_phone: boolean;
   github_url: string | null;
   linkedin_url: string | null;
   cv_url: string | null;
@@ -54,13 +57,6 @@ type ProfileRecord = {
   portrait_media_reference: string | null;
   portrait_alt: string;
   portrait_object_position: 'center' | 'top' | 'bottom';
-  updated_at: string;
-};
-
-type PrivateContactRecord = {
-  operations_email: string | null;
-  phone_number: string | null;
-  timezone: string;
   updated_at: string;
 };
 
@@ -90,7 +86,6 @@ type AdminWorkspaceProps = {
   publicContact: PublicContactRecord | null;
   experienceCount: number;
   profile: ProfileRecord | null;
-  privateContact: PrivateContactRecord | null;
   news: NewsRecord[];
   projects: Project[];
 };
@@ -116,9 +111,6 @@ type ProfileFormState = {
   portraitMediaReference: string;
   portraitAlt: string;
   portraitObjectPosition: 'center' | 'top' | 'bottom';
-  operationsEmail: string;
-  phoneNumber: string;
-  timezone: string;
 };
 
 type NewsFormState = { title:string; slug:string; body:string; mediaMode:'none'|'image'; mediaReference:string; mediaAlt:string };
@@ -453,13 +445,7 @@ function ExperienceEditor({ experiences }: { experiences: ExperienceRecord[] }) 
   );
 }
 
-function ProfileEditor({
-  profile,
-  privateContact,
-}: {
-  profile: ProfileRecord | null;
-  privateContact: PrivateContactRecord | null;
-}) {
+function ProfileEditor({ profile }: { profile: ProfileRecord | null }) {
   const router = useRouter();
   const initialForm = useMemo<ProfileFormState>(() => ({
     firstName: profile?.first_name ?? '',
@@ -469,10 +455,7 @@ function ProfileEditor({
     portraitMediaReference: profile?.portrait_media_reference || DEFAULT_PORTRAIT_REFERENCE,
     portraitAlt: profile?.portrait_alt || DEFAULT_PORTRAIT_ALT,
     portraitObjectPosition: profile?.portrait_object_position ?? 'center',
-    operationsEmail: privateContact?.operations_email ?? '',
-    phoneNumber: privateContact?.phone_number ?? '',
-    timezone: privateContact?.timezone ?? 'Europe/Stockholm',
-  }), [profile, privateContact]);
+  }), [profile]);
   const [savedForm, setSavedForm] = useState(initialForm);
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState('');
@@ -539,7 +522,7 @@ function ProfileEditor({
     }
   };
 
-  const lastUpdated = privateContact?.updated_at ?? profile?.updated_at;
+  const lastUpdated = profile?.updated_at;
 
   return (
     <form className="admin-profile-form" onSubmit={handleSubmit} noValidate>
@@ -801,14 +784,14 @@ function AboutBasicsEditor({ about, sections }: { about: AboutRecord | null; sec
 }
 
 function ContactEditor({ contact }: { contact: PublicContactRecord | null }) {
-  const [form, setForm] = useState({ email: contact?.email ?? '', githubUrl: contact?.github_url ?? '', linkedinUrl: contact?.linkedin_url ?? '', cvUrl: contact?.cv_url ?? '' });
+  const [form, setForm] = useState({ email: contact?.email ?? '', phoneNumber: contact?.phone_number ?? '', showEmail: contact?.show_email ?? false, showPhone: contact?.show_phone ?? false, githubUrl: contact?.github_url ?? '', linkedinUrl: contact?.linkedin_url ?? '', cvUrl: contact?.cv_url ?? '' });
   const [notice, setNotice] = useState('');
   const save = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const response = await fetch('/api/admin/content', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'contact', ...form }) });
     setNotice(response.ok ? 'Public contact settings saved.' : 'Contact settings could not be saved.');
   };
-  return <form className="admin-profile-form" onSubmit={save}><fieldset className="admin-profile-section"><legend><span>Public contact only</span><strong>RLS</strong></legend><div className="admin-profile-fields"><label className="admin-profile-field"><span>Email</span><input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></label><label className="admin-profile-field"><span>GitHub</span><input value={form.githubUrl} onChange={(event) => setForm({ ...form, githubUrl: event.target.value })} /></label><label className="admin-profile-field"><span>LinkedIn</span><input value={form.linkedinUrl} onChange={(event) => setForm({ ...form, linkedinUrl: event.target.value })} /></label><label className="admin-profile-field"><span>CV / resume</span><input value={form.cvUrl} onChange={(event) => setForm({ ...form, cvUrl: event.target.value })} /></label></div></fieldset><div className="admin-profile-actions"><p className="admin-profile-notice" role="status">{notice}</p><button className="admin-profile-save" type="submit">Save Contact</button></div></form>;
+  return <form className="admin-profile-form" onSubmit={save}><fieldset className="admin-profile-section"><legend><span>Contact settings</span><strong>RLS</strong></legend><div className="admin-profile-fields"><label className="admin-profile-field"><span>Email</span><input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></label><label className="admin-profile-field"><span>Phone number</span><input type="tel" placeholder="+46701234567" value={form.phoneNumber} onChange={(event) => setForm({ ...form, phoneNumber: event.target.value })} /></label><label className="admin-profile-field"><span>Public visibility</span><span><input type="checkbox" checked={form.showEmail} onChange={(event) => setForm({ ...form, showEmail: event.target.checked })} /> Show email publicly</span><span><input type="checkbox" checked={form.showPhone} onChange={(event) => setForm({ ...form, showPhone: event.target.checked })} /> Show phone publicly</span></label><label className="admin-profile-field"><span>GitHub</span><input value={form.githubUrl} onChange={(event) => setForm({ ...form, githubUrl: event.target.value })} /></label><label className="admin-profile-field"><span>LinkedIn</span><input value={form.linkedinUrl} onChange={(event) => setForm({ ...form, linkedinUrl: event.target.value })} /></label><label className="admin-profile-field"><span>CV / resume</span><input value={form.cvUrl} onChange={(event) => setForm({ ...form, cvUrl: event.target.value })} /></label></div></fieldset><div className="admin-profile-actions"><p className="admin-profile-notice" role="status">{notice}</p><button className="admin-profile-save" type="submit">Save Contact</button></div></form>;
 }
 
 function newsToForm(record: NewsRecord): NewsFormState {
@@ -845,7 +828,6 @@ export default function AdminWorkspace({
   publicContact,
   experienceCount,
   profile,
-  privateContact,
   news,
   projects,
 }: AdminWorkspaceProps) {
@@ -980,7 +962,7 @@ export default function AdminWorkspace({
           {activePanel === 'news' && <NewsManager news={news} />}
 
           {activePanel === 'profile' && (
-            <div className="admin-module-window"><div className="admin-module-heading"><div><span>Public identity / 03</span><h2>Profile</h2></div><strong>03</strong></div><ProfileEditor profile={profile} privateContact={privateContact} /></div>
+            <div className="admin-module-window"><div className="admin-module-heading"><div><span>Public identity / 03</span><h2>Profile</h2></div><strong>03</strong></div><ProfileEditor profile={profile} /></div>
           )}
 
           {activePanel === 'about' && (
