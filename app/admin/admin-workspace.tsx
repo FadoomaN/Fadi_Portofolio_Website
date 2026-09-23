@@ -4,6 +4,8 @@ import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from 're
 import { usePathname, useRouter } from 'next/navigation';
 import ContentManager from './content-manager';
 import ProjectManager from './project-manager';
+import ContactInbox from './contact-inbox';
+import SecurityCenter from './security-center';
 import type { Thread } from '@/lib/content';
 import type { Project } from '@/lib/projects';
 
@@ -597,55 +599,6 @@ function ProfileEditor({
         </div>
       </fieldset>
 
-      <fieldset className="admin-profile-section admin-profile-private">
-        <legend>
-          <span>02</span>
-          <strong>Private operations</strong>
-          <small>Admin and database only</small>
-        </legend>
-
-        <div className="admin-profile-fields">
-          <label className="admin-profile-field">
-            <span>Operations email</span>
-            <input
-              name="operationsEmail"
-              value={form.operationsEmail}
-              onChange={handleChange}
-              type="email"
-              maxLength={254}
-              autoComplete="email"
-              placeholder="name@gmail.com"
-            />
-            <small>For internal requests and future notifications.</small>
-          </label>
-          <label className="admin-profile-field">
-            <span>Phone number</span>
-            <input
-              name="phoneNumber"
-              value={form.phoneNumber}
-              onChange={handleChange}
-              type="tel"
-              autoComplete="tel"
-              placeholder="+46701234567"
-            />
-            <small>Use international format beginning with +.</small>
-          </label>
-          <label className="admin-profile-field admin-profile-field-timezone">
-            <span>Timezone</span>
-            <select name="timezone" value={form.timezone} onChange={handleChange}>
-              <option value="Europe/Stockholm">Europe / Stockholm</option>
-              <option value="UTC">UTC</option>
-            </select>
-            <small>Used when requests and content receive timestamps.</small>
-          </label>
-          <div className="admin-profile-privacy">
-            <span aria-hidden="true">LOCK / RLS</span>
-            <strong>Private fields are isolated</strong>
-            <p>Email and phone are never selected or rendered by public pages.</p>
-          </div>
-        </div>
-      </fieldset>
-
       <div className="admin-profile-actions">
         <div>
           <p className="admin-profile-error" role="alert" aria-live="polite">{error}</p>
@@ -881,20 +834,6 @@ function NewsManager({ news }: { news: NewsRecord[] }) {
   return <div className="admin-module-window admin-news-window"><div className="admin-module-heading"><div><span>News module / 02</span><h2>Post News</h2></div><strong>{String(records.length).padStart(2,'0')}</strong></div><div className="admin-news-manager"><aside><button type="button" className="admin-news-new" onClick={create}>+ New post</button>{records.map(record=><button type="button" className={selectedId===record.id?'is-active':''} onClick={()=>choose(record)} key={record.id}><strong>{record.title}</strong><span>{formatDate(record.published_at)}</span></button>)}</aside><form onSubmit={save}><div className="admin-news-form-heading"><span>{selectedId?'Edit post':'New post'}</span><a href={selectedId?`/news/${form.slug}`:'#'} target="_blank" rel="noreferrer" aria-disabled={!selectedId}>Preview ↗</a></div><label><span>Title</span><input required maxLength={180} value={form.title} onChange={event=>update('title',event.target.value)} /></label><label><span>URL slug</span><input required maxLength={120} pattern="[a-z0-9]+(?:-[a-z0-9]+)*" value={form.slug} onChange={event=>update('slug',event.target.value.toLowerCase().replace(/[^a-z0-9-]/g,'').replace(/--+/g,'-'))} /></label><label><span>Body</span><textarea rows={8} maxLength={12000} value={form.body} onChange={event=>update('body',event.target.value)} /></label><fieldset className="admin-news-media"><legend>Media</legend><div className="admin-news-media-choice"><button type="button" className={form.mediaMode==='none'?'is-active':''} onClick={()=>setMediaMode('none')}>No media</button><button type="button" className={form.mediaMode==='image'?'is-active':''} onClick={()=>setMediaMode('image')}>Image</button></div>{form.mediaMode==='image'&&<>{form.mediaReference&&<img src={form.mediaReference} alt={form.mediaAlt} />}<label className="admin-upload-button">{form.mediaReference?'Replace image':'Upload image'}<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={upload} /></label>{form.mediaReference&&<button type="button" className="admin-profile-reset" onClick={()=>setMediaMode('none')}>Remove image</button>}<label><span>Image alt text</span><input maxLength={300} value={form.mediaAlt} onChange={event=>update('mediaAlt',event.target.value)} /></label></>}</fieldset><div className="admin-profile-actions"><div><p className="admin-profile-error" role="alert">{error}</p><p className="admin-profile-notice" role="status">{notice}</p>{!error&&!notice&&<small>{dirty?'Unsaved changes':'Ready to post'}</small>}</div><button type="button" className="admin-profile-reset" onClick={()=>{setForm(savedForm);resetFeedback();}} disabled={!dirty||saving}>Reset</button>{selectedId&&<button type="button" className="admin-experience-delete" onClick={remove} disabled={saving}>{deleteArmed?'Confirm delete':'Delete'}</button>}<button className="admin-profile-save" type="submit" disabled={saving||!dirty}>{saving?'Saving…':selectedId?'Save changes':'Post News'}</button></div></form></div></div>;
 }
 
-function MaintenancePanel({ label, title, index }: { label: string; title: string; index: string }) {
-  return (
-    <div className="admin-module-window">
-      <div className="admin-module-heading">
-        <div><span>{label}</span><h2>{title}</h2></div>
-        <strong>{index}</strong>
-      </div>
-      <div className="admin-empty-state" role="status">
-        <strong>Under development</strong>
-      </div>
-    </div>
-  );
-}
-
 export default function AdminWorkspace({
   experiences,
   threads,
@@ -1063,11 +1002,11 @@ export default function AdminWorkspace({
           )}
 
           {activePanel === 'contact' && (
-            <MaintenancePanel label="Public channel / 07" title="Contact" index="07" />
+            <div className="admin-module-window"><div className="admin-module-heading"><div><span>Public channel / 07</span><h2>Contact</h2></div><strong>07</strong></div><ContactEditor contact={publicContact} /><ContactInbox /></div>
           )}
 
           {activePanel === 'security' && (
-            <MaintenancePanel label="Security module / 08" title="Security" index="08" />
+            <div className="admin-module-window"><div className="admin-module-heading"><div><span>Security module / 08</span><h2>Security</h2></div><strong>08</strong></div><SecurityCenter /></div>
           )}
         </div>
       </div>

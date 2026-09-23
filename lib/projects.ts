@@ -91,6 +91,7 @@ export type DevLogEntry = {
   github_url: string | null;
   media: Record<string, unknown>[];
   code: Record<string, unknown>[];
+  blocks?: ProjectBlock[];
   status: ProjectVisibility;
   created_at: string;
   updated_at: string;

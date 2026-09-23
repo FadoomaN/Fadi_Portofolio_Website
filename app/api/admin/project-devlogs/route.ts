@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
   try { body = await readJsonObject(request); } catch { return json({ error: "Invalid dev log." }, 400); }
   const id = text(body.id), projectId = text(body.projectId), slug = text(body.slug, 120), title = text(body.title, 180), entryDate = text(body.entryDate, 10), status = text(body.status), githubUrl = text(body.githubUrl, 2000);
   if ((id && !UUID.test(id)) || !UUID.test(projectId) || !SLUG.test(slug) || !title || !/^\d{4}-\d{2}-\d{2}$/.test(entryDate) || !["draft", "published"].includes(status) || (githubUrl && !/^https:\/\//.test(githubUrl)) || !validProjectBlocks(body.blocks)) return json({ error: "Check the dev log details and content blocks." }, 400);
-  const record = { project_id: projectId, slug, title, entry_date: entryDate, version: text(body.version, 80) || null, tag: text(body.tag, 80) || null, summary: text(body.summary, 1000), content: text(body.content), github_url: githubUrl || null, media: [], code: [], status };
+  const record = { project_id: projectId, slug, title, entry_date: entryDate, version: text(body.version, 80) || null, tag: text(body.tag, 80) || null, summary: text(body.summary, 1000), content: text(body.content), github_url: githubUrl || null, status };
   const query = id ? auth.supabase.from("project_dev_logs").update(record).eq("id", id) : auth.supabase.from("project_dev_logs").insert(record);
   const { data, error } = await query.select().single();
   if (error) return json({ error: error.code === "23505" ? "That log slug is already in use." : "The dev log could not be saved." }, 400);

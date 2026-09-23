@@ -15,6 +15,7 @@ import {
 } from "@/lib/projects";
 import ProjectCodeEditor from "./project-code-editor";
 import ProjectRichTextEditor from "./project-rich-text-editor";
+import ProjectBlockEditor, { DEVLOG_BLOCK_TYPES, normalizeProjectBlocks } from "./project-block-editor";
 
 type Form = {
   title: string;
@@ -41,6 +42,7 @@ type LogForm = {
   tag: string;
   summary: string;
   content: string;
+  blocks: ProjectBlock[];
   githubUrl: string;
   status: ProjectVisibility;
 };
@@ -70,6 +72,7 @@ const blankLog = (): LogForm => ({
   tag: "",
   summary: "",
   content: "",
+  blocks: [],
   githubUrl: "",
   status: "draft",
 });
@@ -98,6 +101,7 @@ const logForm = (x: DevLogEntry): LogForm => ({
   tag: x.tag ?? "",
   summary: x.summary,
   content: x.content,
+  blocks: x.blocks?.length ? x.blocks : x.content.trim() ? [{ type: "text", sort_order: 0, data: { text: x.content } }] : [],
   githubUrl: x.github_url ?? "",
   status: x.status,
 });
@@ -324,7 +328,7 @@ export default function ProjectManager({
     const r = await fetch("/api/admin/project-devlogs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...editingLog, projectId: selected.id }),
+        body: JSON.stringify({ ...editingLog, blocks: normalizeProjectBlocks(editingLog.blocks), projectId: selected.id }),
       }),
       j = await r.json();
     if (!r.ok) {
@@ -949,19 +953,6 @@ export default function ProjectManager({
                     />
                   </label>
                   <label className="wide">
-                    Full content
-                    <textarea
-                      rows={9}
-                      value={editingLog.content}
-                      onChange={(e) =>
-                        setEditingLog({
-                          ...editingLog,
-                          content: e.target.value,
-                        })
-                      }
-                    />
-                  </label>
-                  <label className="wide">
                     GitHub reference URL
                     <input
                       value={editingLog.githubUrl}
@@ -973,6 +964,7 @@ export default function ProjectManager({
                       }
                     />
                   </label>
+                  <div className="wide project-admin-log-blocks"><strong>DEV LOG CONTENT</strong><ProjectBlockEditor ariaLabel="Dev log content blocks" blocks={editingLog.blocks} types={DEVLOG_BLOCK_TYPES} onChange={(blocks)=>setEditingLog({...editingLog,blocks})}/></div>
                   <div>
                     <button type="button" onClick={() => void saveLog()}>
                       SAVE DEV LOG
@@ -1003,7 +995,7 @@ export default function ProjectManager({
                   RESET CHANGES
                 </button>
                 <button type="button" onClick={() => void save(form.status)}>
-                  {form.status === "published"
+                  {savedForm.status !== "published" && form.status === "published"
                     ? "PUBLISH PROJECT"
                     : "SAVE PROJECT"}
                 </button>
