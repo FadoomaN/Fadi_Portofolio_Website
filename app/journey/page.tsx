@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import SiteHeader from '../site-header';
-import CircuitDivider from '../circuit-divider';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import SearchableCards from './searchable-cards';
 import './feedback.css';
+import SiteFooter from '../site-footer';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,21 +27,20 @@ export default async function JourneyPage() {
       <main className="journey-canvas">
         <section className="journey-frame" aria-labelledby="journey-title">
           <header className="journey-intro">
-            <p className="journey-kicker">03 / Journey</p>
-            <h1 id="journey-title">JOURNEY</h1>
+            <p className="journey-kicker">Notes over time</p>
+            <h1 id="journey-title">Journey</h1>
             <p>Long-running personal threads for interests, experiments and experiences that continue to develop over time.</p>
           </header>
-          <CircuitDivider />
           <section className="journey-threads" aria-labelledby="threads-title">
             <div className="journey-section-heading">
-              <span>Personal archive / 03</span>
-              <h2 id="threads-title">THREADS</h2>
+              <h2 id="threads-title">Threads</h2>
             </div>
             {!error && !childError && <SearchableCards kind="threads" threads={threads ?? []} childCounts={Object.fromEntries(childCounts)} />}
             {(error || childError) && <p role="alert">Journey is temporarily unavailable. Please try again shortly.</p>}
           </section>
         </section>
       </main>
+      <SiteFooter />
     </>
   );
 }

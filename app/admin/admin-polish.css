@@ -1,0 +1,96 @@
+/* Admin is an editor, not a simulated control room. Keep it dense where data benefits. */
+.admin-workspace { box-shadow: none; border-color: var(--panel-border); background: var(--paper); }
+.admin-sidebar { background: color-mix(in srgb, var(--hero-surface) 84%, var(--paper)); }
+.admin-sidebar-brand { padding: 1.35rem 1.2rem; }
+.admin-sidebar-brand strong { font: 700 .9rem/1.2 Arial, Helvetica, sans-serif; letter-spacing: -.01em; }
+.admin-sidebar-brand small { font: 500 .7rem/1.3 Arial, Helvetica, sans-serif; letter-spacing: 0; }
+.admin-sidebar-menu { padding: .85rem .6rem; gap: .12rem; }
+.admin-sidebar-menu button { min-height: 3.25rem; grid-template-columns: 1.2rem 1fr; border: 0; padding: .55rem .7rem; transition: background-color 160ms ease; }
+.admin-sidebar-menu button::before { width: 2px; }
+.admin-sidebar-menu button:hover, .admin-sidebar-menu button:focus-visible, .admin-sidebar-menu button.is-active { padding-left: .7rem; background: color-mix(in srgb, var(--current) 10%, transparent); }
+.admin-sidebar-menu button span { font: 500 .64rem/1 Consolas, 'Courier New', monospace; }
+.admin-sidebar-menu button strong { font: 600 .85rem/1.3 Arial, Helvetica, sans-serif; letter-spacing: 0; text-transform: none; }
+.admin-sidebar-menu button i { display: none; }
+.admin-sidebar-footer { padding: 1.1rem; }
+.admin-sidebar-footer button { border: 0; padding: .45rem .2rem; font: 600 .8rem/1.3 Arial, Helvetica, sans-serif; letter-spacing: 0; text-transform: none; }
+.admin-window { background: var(--paper); }
+.admin-window-bar { height: 3.15rem; background: var(--paper); font: 500 .75rem/1 Consolas, 'Courier New', monospace; letter-spacing: .02em; text-transform: none; }
+.admin-window-view { background: var(--paper); animation: none; }
+.admin-module-heading { padding: clamp(1.4rem, 3vw, 2.8rem); background: var(--hero-surface); }
+.admin-module-heading span { color: var(--muted-ink); font: 500 .8rem/1.3 Arial, Helvetica, sans-serif; letter-spacing: 0; text-transform: none; }
+.admin-module-heading h2 { font-family: Arial, Helvetica, sans-serif; font-weight: 700; letter-spacing: -.055em; text-transform: none; }
+.admin-module-heading > strong { opacity: .14; }
+.admin-overview-window { display: block; }
+.admin-overview-heading { min-height: 16rem; background: var(--hero-surface); }
+.admin-overview-heading h1 { margin: .5rem 0 0; font: 700 clamp(3rem, 6vw, 5.5rem)/1 Arial, Helvetica, sans-serif; letter-spacing: -.06em; text-transform: none; }
+.admin-overview-heading p { max-width: 24rem; line-height: 1.55; }
+.admin-quick-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--panel-border); }
+.admin-quick-metrics article { border: 0; border-right: 1px solid var(--panel-border); padding: 1.6rem; background: transparent; }
+.admin-quick-metrics article:last-child { border-right: 0; }
+.admin-connection-notice { margin: 2rem; color: #d98484; }
+
+/* One consistent control language across legacy modules. */
+.admin-workspace input:not([type='checkbox']):not([type='radio']):not([type='file']),
+.admin-workspace textarea,
+.admin-workspace select { min-width: 0; border: 1px solid var(--panel-border); border-radius: 0; background: color-mix(in srgb, var(--paper) 90%, var(--hero-surface)); color: var(--ink); font-family: Arial, Helvetica, sans-serif; font-size: .95rem; line-height: 1.4; }
+.admin-workspace input:focus-visible, .admin-workspace textarea:focus-visible, .admin-workspace select:focus-visible,
+.admin-workspace button:focus-visible { outline: 2px solid var(--current); outline-offset: 2px; }
+.admin-workspace textarea { line-height: 1.6; resize: vertical; }
+.admin-workspace input[type='checkbox'] { accent-color: var(--current); }
+.admin-workspace button { border-radius: 0; }
+.admin-profile-save, .project-admin-save button { border-color: var(--current); background: var(--current); color: var(--paper); }
+.admin-profile-reset { border-color: var(--panel-border); background: transparent; }
+.admin-experience-delete, .project-delete { border-color: #a36a6a; color: #d28484; }
+.admin-profile-field > span, .project-admin label, .admin-news-manager label > span { color: var(--muted-ink); font: 600 .78rem/1.4 Arial, Helvetica, sans-serif; letter-spacing: 0; text-transform: none; }
+.admin-profile-section { border-color: var(--panel-border); }
+.admin-profile-section legend { font-family: Arial, Helvetica, sans-serif; text-transform: none; letter-spacing: -.02em; }
+.admin-profile-section legend strong { display: none; }
+
+/* Contact settings and messages remain two distinct tasks. */
+.admin-module-window:has(.admin-contact-inbox) { display: block; }
+.admin-module-window:has(.admin-contact-inbox) > .admin-profile-form { max-width: 72rem; padding-bottom: 2rem; }
+.admin-module-window:has(.admin-contact-inbox) > .admin-profile-form::before { display: block; margin: 0 0 1.5rem; color: var(--muted-ink); font: 500 .8rem/1.4 Arial, Helvetica, sans-serif; content: 'CONTACT SETTINGS'; }
+.admin-contact-inbox { max-width: 82rem; margin: 1rem clamp(1rem, 3vw, 2.5rem) 3rem; border-top: 1px solid var(--panel-border); }
+.admin-contact-inbox aside { background: color-mix(in srgb, var(--hero-surface) 78%, var(--paper)); }
+.admin-contact-inbox aside button { min-height: 4.5rem; cursor: pointer; }
+.admin-contact-inbox aside button.is-active { border-left: 2px solid var(--current); background: color-mix(in srgb, var(--current) 8%, var(--hero-surface)); }
+.admin-contact-inbox > section { padding: clamp(1.2rem, 3vw, 2.5rem); }
+.admin-contact-message { max-width: 46rem; line-height: 1.75; }
+
+/* Security reads as four ordered sections, not equal metric cards. */
+.admin-security-center { display: block; max-width: 64rem; margin: 0 auto; padding: clamp(1.5rem, 3.5vw, 3.5rem); }
+.admin-security-center > section { border: 0; border-bottom: 1px solid var(--panel-border); padding: 2rem 0; }
+.admin-security-center > section:first-child { padding-top: 0; }
+.admin-security-center h3 { margin: 0 0 1.35rem; font: 700 clamp(1.4rem, 2.2vw, 2rem)/1.2 Arial, Helvetica, sans-serif; letter-spacing: -.035em; text-transform: none; }
+.admin-security-center dl { max-width: 42rem; margin: 0; }
+.admin-security-center dl div { padding: .75rem 0; }
+.admin-security-center dt { color: var(--muted-ink); font-size: .85rem; text-transform: none; }
+.admin-security-center dd { font-weight: 600; overflow-wrap: anywhere; }
+.admin-security-center form { max-width: 34rem; gap: 1.1rem; }
+.admin-security-center label { color: var(--muted-ink); font-size: .85rem; font-weight: 600; }
+.admin-security-center input { min-height: 2.85rem; padding: .75rem .85rem; }
+.admin-security-center button { width: fit-content; border: 1px solid var(--panel-border); padding: .7rem .9rem; background: transparent; color: var(--ink); font: 600 .85rem/1.3 Arial, Helvetica, sans-serif; cursor: pointer; }
+.admin-security-center form button, .security-enrollment button { border-color: var(--current); background: var(--current); color: var(--paper); }
+.admin-security-center button:disabled { opacity: .5; cursor: not-allowed; }
+.admin-security-center article { max-width: 42rem; flex-wrap: wrap; gap: 1rem; border-top: 1px solid var(--panel-border); padding: 1rem 0; }
+.admin-security-center article div { gap: .15rem; }
+.admin-security-center article small { color: var(--muted-ink); font-size: .8rem; }
+.admin-security-center > section > p { color: var(--muted-ink); }
+.admin-security-actions { justify-content: start; flex-wrap: wrap; }
+.admin-security-actions button:last-child { border-color: #a36a6a; color: #d28484; }
+.security-enrollment { max-width: 32rem; display: grid; gap: 1rem; margin-top: 1.5rem; border-left: 2px solid var(--current); padding: 1.25rem; background: var(--hero-surface); }
+.security-enrollment img { width: min(100%, 11rem); }
+.security-enrollment code { overflow-wrap: anywhere; }
+
+/* Project builder: preserve data density, remove unnecessary nested chrome. */
+.project-admin-blocks { border: 0; padding: 0; background: none; }
+.project-admin-blocks article { background: var(--hero-surface); animation: none; }
+.project-admin-projects article { background: var(--hero-surface); animation: none; }
+.project-admin-projects article:hover { transform: none; }
+.project-admin-essentials { border-color: var(--panel-border); }
+.project-admin-essentials legend { color: var(--ink); font: 600 .85rem/1.4 Arial, Helvetica, sans-serif; letter-spacing: 0; }
+.project-admin-devlogs { border: 0; border-top: 1px solid var(--panel-border); padding: 1.5rem 0 0; }
+
+@media (max-width: 64rem) { .admin-quick-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } .admin-quick-metrics article:nth-child(2) { border-right: 0; } }
+@media (max-width: 48rem) { .admin-overview-heading { display: block; min-height: 0; } .admin-overview-heading p { margin-top: 1rem; } .admin-security-center { padding: 1.25rem; } .admin-contact-inbox { margin-inline: 1rem; } }
+@media (max-width: 27rem) { .admin-quick-metrics { grid-template-columns: 1fr; } .admin-quick-metrics article { border-right: 0; border-bottom: 1px solid var(--panel-border); } .admin-security-center article { align-items: start; } .admin-security-actions { display: grid; } }

@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import SiteHeader from '../site-header';
-import CircuitDivider from '../circuit-divider';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { headers } from 'next/headers';
 import AdminScreen from '../admin/admin-screen';
+import SiteFooter from '../site-footer';
 
 export const metadata: Metadata = {
   title: 'About — Fadi Al Hazim',
@@ -28,11 +28,10 @@ export default async function AboutPage() {
       <main className="about-canvas">
         <div className="about-frame">
           <header className="about-intro" aria-labelledby="about-title">
-            <p className="about-kicker"><span>02 / Personal profile</span><i aria-hidden="true" /><span>Editorial draft</span></p>
-            <h1 id="about-title">ABOUT ME</h1>
+            <p className="about-kicker"><span>About</span></p>
+            <h1 id="about-title">A little about me.</h1>
             <p>{intro}</p>
           </header>
-          <CircuitDivider />
 
           <div className="about-story">
             {sections.map((section, index) => (
@@ -49,9 +48,9 @@ export default async function AboutPage() {
               </section>
             ))}
           </div>
-          <p className="about-footer-note">ABOUT / CONTENT IN PROGRESS</p>
         </div>
       </main>
+      <SiteFooter />
     </>
   );
 }

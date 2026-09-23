@@ -876,8 +876,8 @@ export default function AdminWorkspace({
         <div className="admin-sidebar-brand">
           <span className="admin-brand-mark" aria-hidden="true" />
           <div>
-            <strong>CONTROL</strong>
-            <small>NODE / 001</small>
+            <strong>FAH / Admin</strong>
+            <small>Content workspace</small>
           </div>
         </div>
 
@@ -899,7 +899,6 @@ export default function AdminWorkspace({
         </nav>
 
         <div className="admin-sidebar-footer">
-          <span className="admin-online"><i /> Online</span>
           <form action="/api/auth/logout" method="post">
             <button type="submit">Sign out</button>
           </form>
@@ -909,11 +908,6 @@ export default function AdminWorkspace({
       <div className="admin-window">
         <header className="admin-window-bar">
           <span>{activeItem.index} / {activeItem.label}</span>
-          <div className="admin-window-controls" aria-hidden="true">
-            <i />
-            <i />
-            <i />
-          </div>
         </header>
 
         <div className="admin-window-view" key={`${activePanel}-${threadsView}`}>
@@ -922,10 +916,10 @@ export default function AdminWorkspace({
             <div className="admin-overview-window">
               <div className="admin-overview-heading">
                 <div>
-                  <span>Private workspace</span>
-                  <h1>ADMIN<br />SYSTEM</h1>
+                  <span>Content workspace</span>
+                  <h1>Overview</h1>
                 </div>
-                <p>One control surface.<br />Every module opens here.</p>
+                <p>Manage the content and settings of this portfolio.</p>
               </div>
 
               <div className="admin-quick-metrics">
@@ -951,11 +945,7 @@ export default function AdminWorkspace({
                 </article>
               </div>
 
-              <div className="admin-system-strip">
-                <span><i /> {loadError ? 'Connection needs attention' : 'Supabase connected'}</span>
-                <span>RLS active</span>
-                <span>Session encrypted</span>
-              </div>
+              {loadError && <p className="admin-connection-notice">The content connection needs attention.</p>}
             </div>
           )}
 
