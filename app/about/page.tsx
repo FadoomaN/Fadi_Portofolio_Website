@@ -28,7 +28,7 @@ export default async function AboutPage() {
       <main className="about-canvas">
         <div className="about-frame">
           <header className="about-intro" aria-labelledby="about-title">
-            <p className="about-kicker"><span>02 / Personal profile</span><i aria-hidden="true" /><span>Editorial draft</span></p>
+            <p className="about-kicker"><span>02 / Personal profile</span><i aria-hidden="true" /><span>Computer engineer</span></p>
             <h1 id="about-title">ABOUT ME</h1>
             <p>{intro}</p>
           </header>

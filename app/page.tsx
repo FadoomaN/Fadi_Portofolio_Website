@@ -34,8 +34,8 @@ export default async function Home() {
   const updates = [
     ...((activityRows ?? []) as Activity[]).map((item) => ({
       ...item, kind:'activity' as const, date:item.created_at,
-      label:item.event_type==='thread_updated'?'THREAD UPDATED':item.event_type==='subthread_updated'?'SUBTHREAD UPDATED':'NEW SUBTHREAD',
-      title:item.event_type==='thread_updated'?`THREAD “${item.thread_title}” UPDATED`:item.event_type==='subthread_updated'?`SUBTHREAD “${item.subthread_title}” UPDATED`:`THREAD “${item.thread_title}” ADDED “${item.subthread_title}”`,
+      label:item.event_type==='thread_updated'?'THREAD UPDATE':item.event_type==='subthread_updated'?'ENTRY UPDATE':'NEW ENTRY',
+      title:item.event_type==='thread_updated'?`${item.thread_title} updated`:item.event_type==='subthread_updated'?`${item.subthread_title} updated`:`${item.subthread_title} added to ${item.thread_title}`,
       href:item.subthread_slug?`/journey/${item.thread_slug}/${item.subthread_slug}`:`/journey/${item.thread_slug}`,
       action:item.subthread_slug?'VIEW SUBTHREAD':'VIEW THREAD', body:null, mediaAlt:null,
     })),
@@ -107,11 +107,11 @@ export default async function Home() {
        <section className="home-signal home-section" aria-labelledby="signal-title">
         <div className="home-section-label"><span>01 / CURRENT SIGNAL</span><i aria-hidden="true" /></div>
         <div className="signal-readout">
-          <div><small>BUILDING</small><strong>Turning ideas into real systems.</strong></div>
-          <div><small>LEARNING</small><strong>Knowledge compounds. Every system unlocks the next.</strong></div>
-          <div><small>EXPLORING</small><strong>From hardware to software to worlds in motion.</strong></div>
+          <div><small>FOCUS</small><strong>Engineering across software and hardware.</strong></div>
+          <div><small>WORKBENCH</small><strong>This portfolio is a living technical archive.</strong></div>
+          <div><small>DOCUMENTING</small><strong>Projects, experiments and lessons from the work.</strong></div>
         </div>
-        <div className="signal-status" aria-hidden="true"><span>LIVE / 03</span><i /><span>UPTIME / ACTIVE</span></div>
+        <div className="signal-status"><span>STOCKHOLM / SWEDEN</span><i aria-hidden="true" /><span>COMPUTER ENGINEERING</span></div>
         <h2 id="signal-title" className="sr-only">Current signal</h2>
        </section>
 

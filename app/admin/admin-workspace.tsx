@@ -791,7 +791,26 @@ function ContactEditor({ contact }: { contact: PublicContactRecord | null }) {
     const response = await fetch('/api/admin/content', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'contact', ...form }) });
     setNotice(response.ok ? 'Public contact settings saved.' : 'Contact settings could not be saved.');
   };
-  return <form className="admin-profile-form" onSubmit={save}><fieldset className="admin-profile-section"><legend><span>Contact settings</span><strong>RLS</strong></legend><div className="admin-profile-fields"><label className="admin-profile-field"><span>Email</span><input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></label><label className="admin-profile-field"><span>Phone number</span><input type="tel" placeholder="+46701234567" value={form.phoneNumber} onChange={(event) => setForm({ ...form, phoneNumber: event.target.value })} /></label><label className="admin-profile-field"><span>Public visibility</span><span><input type="checkbox" checked={form.showEmail} onChange={(event) => setForm({ ...form, showEmail: event.target.checked })} /> Show email publicly</span><span><input type="checkbox" checked={form.showPhone} onChange={(event) => setForm({ ...form, showPhone: event.target.checked })} /> Show phone publicly</span></label><label className="admin-profile-field"><span>GitHub</span><input value={form.githubUrl} onChange={(event) => setForm({ ...form, githubUrl: event.target.value })} /></label><label className="admin-profile-field"><span>LinkedIn</span><input value={form.linkedinUrl} onChange={(event) => setForm({ ...form, linkedinUrl: event.target.value })} /></label><label className="admin-profile-field"><span>CV / resume</span><input value={form.cvUrl} onChange={(event) => setForm({ ...form, cvUrl: event.target.value })} /></label></div></fieldset><div className="admin-profile-actions"><p className="admin-profile-notice" role="status">{notice}</p><button className="admin-profile-save" type="submit">Save Contact</button></div></form>;
+  return (
+    <form className="admin-profile-form admin-contact-settings" onSubmit={save}>
+      <fieldset className="admin-profile-section">
+        <legend><span>01</span><strong>Contact settings</strong><small>Public information</small></legend>
+        <div className="admin-profile-fields">
+          <label className="admin-profile-field"><span>Email</span><input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></label>
+          <label className="admin-profile-field"><span>Phone number</span><input type="tel" placeholder="+46701234567" value={form.phoneNumber} onChange={(event) => setForm({ ...form, phoneNumber: event.target.value })} /></label>
+          <fieldset className="admin-profile-field admin-contact-visibility">
+            <legend>Public visibility</legend>
+            <label className="admin-toggle-control"><input type="checkbox" checked={form.showEmail} onChange={(event) => setForm({ ...form, showEmail: event.target.checked })} /><span aria-hidden="true" /><strong>Show email publicly</strong></label>
+            <label className="admin-toggle-control"><input type="checkbox" checked={form.showPhone} onChange={(event) => setForm({ ...form, showPhone: event.target.checked })} /><span aria-hidden="true" /><strong>Show phone publicly</strong></label>
+          </fieldset>
+          <label className="admin-profile-field"><span>GitHub</span><input value={form.githubUrl} onChange={(event) => setForm({ ...form, githubUrl: event.target.value })} /></label>
+          <label className="admin-profile-field"><span>LinkedIn</span><input value={form.linkedinUrl} onChange={(event) => setForm({ ...form, linkedinUrl: event.target.value })} /></label>
+          <label className="admin-profile-field"><span>CV / resume</span><input value={form.cvUrl} onChange={(event) => setForm({ ...form, cvUrl: event.target.value })} /></label>
+        </div>
+      </fieldset>
+      <div className="admin-profile-actions"><p className="admin-profile-notice" role="status">{notice}</p><button className="admin-profile-save" type="submit">Save Contact</button></div>
+    </form>
+  );
 }
 
 function newsToForm(record: NewsRecord): NewsFormState {
@@ -899,7 +918,7 @@ export default function AdminWorkspace({
         </nav>
 
         <div className="admin-sidebar-footer">
-          <span className="admin-online"><i /> Online</span>
+          <span className="admin-session-label">Admin session</span>
           <form action="/api/auth/logout" method="post">
             <button type="submit">Sign out</button>
           </form>
@@ -925,7 +944,7 @@ export default function AdminWorkspace({
                   <span>Private workspace</span>
                   <h1>ADMIN<br />SYSTEM</h1>
                 </div>
-                <p>One control surface.<br />Every module opens here.</p>
+                <p>Manage portfolio content,<br />publishing and private messages.</p>
               </div>
 
               <div className="admin-quick-metrics">
@@ -962,7 +981,7 @@ export default function AdminWorkspace({
           {activePanel === 'news' && <NewsManager news={news} />}
 
           {activePanel === 'profile' && (
-            <div className="admin-module-window"><div className="admin-module-heading"><div><span>Public identity / 03</span><h2>Profile</h2></div><strong>03</strong></div><ProfileEditor profile={profile} /></div>
+            <div className="admin-module-window admin-profile-window"><div className="admin-module-heading"><div><span>Public identity / 03</span><h2>Profile</h2></div><strong>03</strong></div><ProfileEditor profile={profile} /></div>
           )}
 
           {activePanel === 'about' && (
@@ -984,11 +1003,11 @@ export default function AdminWorkspace({
           )}
 
           {activePanel === 'contact' && (
-            <div className="admin-module-window"><div className="admin-module-heading"><div><span>Public channel / 07</span><h2>Contact</h2></div><strong>07</strong></div><ContactEditor contact={publicContact} /><ContactInbox /></div>
+            <div className="admin-module-window admin-contact-window"><div className="admin-module-heading"><div><span>Public channel / 07</span><h2>Contact</h2></div><strong>07</strong></div><ContactEditor contact={publicContact} /><ContactInbox /></div>
           )}
 
           {activePanel === 'security' && (
-            <div className="admin-module-window"><div className="admin-module-heading"><div><span>Security module / 08</span><h2>Security</h2></div><strong>08</strong></div><SecurityCenter /></div>
+            <div className="admin-module-window admin-security-window"><div className="admin-module-heading"><div><span>Security module / 08</span><h2>Security</h2></div><strong>08</strong></div><SecurityCenter /></div>
           )}
         </div>
       </div>

@@ -1,0 +1,16 @@
+warning: in the working copy of 'app/[...adminPath]/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/about/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/admin/admin-workspace.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/admin/contact-inbox.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/admin/security-center.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/contact/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/globals.css', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/page.tsx', LF will be replaced by CRLF the next time Git touches it
+ app/about/page.tsx            |   2 [32m+[m[31m-[m
+ app/admin/admin-workspace.tsx |  31 [32m++++[m[31m-[m
+ app/admin/contact-inbox.tsx   |   2 [32m+[m[31m-[m
+ app/admin/security-center.tsx |   8 [32m+[m[31m-[m
+ app/contact/page.tsx          |  22 [32m++[m[31m--[m
+ app/globals.css               | 259 [32m++++++++++++++++++++++++++++++++++++++++[m[31m--[m
+ app/page.tsx                  |  12 [32m+[m[31m-[m
+ 7 files changed, 301 insertions(+), 35 deletions(-)
