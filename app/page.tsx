@@ -4,7 +4,6 @@ import { siteContent } from './site-content';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { headers } from 'next/headers';
 import AdminScreen from './admin/admin-screen';
-import SiteFooter from './site-footer';
 
 type Activity = { id:string; event_type:'thread_updated'|'subthread_updated'|'subthread_published'; thread_title:string; thread_slug:string; subthread_title:string|null; subthread_slug:string|null; media_reference:string|null; media_position_x:number; media_position_y:number; created_at:string };
 type News = { id:string; slug:string; title:string; body:string; media_reference:string|null; media_alt:string|null; published_at:string };
@@ -35,12 +34,12 @@ export default async function Home() {
   const updates = [
     ...((activityRows ?? []) as Activity[]).map((item) => ({
       ...item, kind:'activity' as const, date:item.created_at,
-      label:item.event_type==='thread_updated'?'Thread update':item.event_type==='subthread_updated'?'Entry update':'New entry',
-      title:item.event_type==='thread_updated'?`${item.thread_title} updated`:item.event_type==='subthread_updated'?`${item.subthread_title} updated`:`${item.subthread_title} added to ${item.thread_title}`,
+      label:item.event_type==='thread_updated'?'THREAD UPDATED':item.event_type==='subthread_updated'?'SUBTHREAD UPDATED':'NEW SUBTHREAD',
+      title:item.event_type==='thread_updated'?`THREAD “${item.thread_title}” UPDATED`:item.event_type==='subthread_updated'?`SUBTHREAD “${item.subthread_title}” UPDATED`:`THREAD “${item.thread_title}” ADDED “${item.subthread_title}”`,
       href:item.subthread_slug?`/journey/${item.thread_slug}/${item.subthread_slug}`:`/journey/${item.thread_slug}`,
-      action:item.subthread_slug?'Read entry':'View thread', body:null, mediaAlt:null,
+      action:item.subthread_slug?'VIEW SUBTHREAD':'VIEW THREAD', body:null, mediaAlt:null,
     })),
-    ...((newsRows ?? []) as News[]).map((item) => ({ ...item, kind:'news' as const, date:item.published_at, label:'News', href:`/news/${item.slug}`, action:'Read note', excerpt:newsExcerpt(item.body), mediaAlt:item.media_alt })),
+    ...((newsRows ?? []) as News[]).map((item) => ({ ...item, kind:'news' as const, date:item.published_at, label:'NEWS', href:`/news/${item.slug}`, action:'READ NOTE', excerpt:newsExcerpt(item.body), mediaAlt:item.media_alt })),
   ].sort((a,b)=>Date.parse(b.date)-Date.parse(a.date)).slice(0,8);
 
   return (
@@ -105,9 +104,20 @@ export default async function Home() {
 
        </section>
 
+       <section className="home-signal home-section" aria-labelledby="signal-title">
+        <div className="home-section-label"><span>01 / CURRENT SIGNAL</span><i aria-hidden="true" /></div>
+        <div className="signal-readout">
+          <div><small>BUILDING</small><strong>Turning ideas into real systems.</strong></div>
+          <div><small>LEARNING</small><strong>Knowledge compounds. Every system unlocks the next.</strong></div>
+          <div><small>EXPLORING</small><strong>From hardware to software to worlds in motion.</strong></div>
+        </div>
+        <div className="signal-status" aria-hidden="true"><span>LIVE / 03</span><i /><span>UPTIME / ACTIVE</span></div>
+        <h2 id="signal-title" className="sr-only">Current signal</h2>
+       </section>
+
        <section className="home-updates home-section" aria-labelledby="updates-title">
-        <div className="home-section-label"><span>From the workbench</span></div>
-        <div className="updates-heading"><h2 id="updates-title">Latest notes</h2><p>Updates from projects and longer-running work.</p></div>
+        <div className="home-section-label"><span>02 / NEWS &amp; UPDATES</span><i aria-hidden="true" /></div>
+        <div className="updates-heading"><h2 id="updates-title">NEWS &amp; UPDATES</h2><p>Notes from the platform, the workshop and the work in progress.</p></div>
         <div className="updates-feed">
           {updates.map((item) => <article className={`update-item${item.media_reference ? ' update-item-media' : ''}`} key={`${item.kind}-${item.id}`}>
             <time>{new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Europe/Stockholm'}).format(new Date(item.date)).replace(',',' ·')}<b>CET</b></time>
@@ -119,8 +129,29 @@ export default async function Home() {
         </div>
        </section>
 
+      <section className="intro" aria-label={`${profile.firstName} ${profile.lastName}`}>
+        <div className="intro-scene">
+          <div className="falling-cube">
+            <span className="cube-shine" />
+          </div>
+
+          <div className="corner corner-top-left">
+            <span className="corner-horizontal" />
+            <span className="corner-vertical" />
+          </div>
+
+          <div className="corner corner-bottom-right">
+            <span className="corner-horizontal" />
+            <span className="corner-vertical" />
+          </div>
+
+          <h1 className="intro-name">
+            <span>{profile.firstName}</span>
+            <span>{profile.lastName}</span>
+          </h1>
+        </div>
+      </section>
       </main>
-      <SiteFooter />
     </>
   );
 }

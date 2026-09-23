@@ -1,7 +1,5 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import './public-polish.css';
-import './admin/admin-polish.css';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
 
@@ -41,7 +39,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var r=document.documentElement;var m=localStorage.getItem('portfolio-theme');m=m==='dark'||m==='light'?m:'system';var d=m==='dark'||(m==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);r.dataset.theme=d?'dark':'light';r.dataset.themeMode=m;}catch(e){}})();`,
+            __html: `(function(){try{var r=document.documentElement;var m=localStorage.getItem('portfolio-theme');m=m==='dark'||m==='light'?m:'system';var d=m==='dark'||(m==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);r.dataset.theme=d?'dark':'light';r.dataset.themeMode=m;if(location.pathname==='/'){var k='portfolio-home-intro-seen';var s=sessionStorage.getItem(k);r.dataset.homeIntro=s?'seen':'show';if(!s)sessionStorage.setItem(k,'1');}}catch(e){}})();`,
           }}
         />
       </head>

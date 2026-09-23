@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import SiteHeader from '../site-header';
+import CircuitDivider from '../circuit-divider';
 import ExperienceTimeline, { type ExperienceRecord } from './experience-timeline';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import SiteFooter from '../site-footer';
 
 export const metadata: Metadata = {
   title: 'Experiences — Fadi Al Hazim',
@@ -28,15 +28,17 @@ export default async function ExperiencesPage() {
         <section className="experience-index-shell" aria-labelledby="experiences-title">
           <header className="experience-index-heading">
             <p>
+              <span>04 / Career timeline</span>
+              <i aria-hidden="true" />
               <span>{String(experiences.length).padStart(2, '0')} records</span>
             </p>
             <h1 id="experiences-title">EXPERIENCES</h1>
           </header>
+          <CircuitDivider />
 
           <ExperienceTimeline experiences={experiences} />
         </section>
       </main>
-      <SiteFooter />
     </>
   );
 }

@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import SiteHeader from '../site-header';
+import CircuitDivider from '../circuit-divider';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import ContactForm from './contact-form';
 import { headers } from 'next/headers';
 import AdminScreen from '../admin/admin-screen';
-import SiteFooter from '../site-footer';
 
 export const metadata: Metadata = {
   title: 'Contact — Fadi Al Hazim',
@@ -22,12 +22,12 @@ export default async function ContactPage() {
   return (
     <>
       <SiteHeader revealImmediately activeHref="/contact" />
+      <CircuitDivider />
       <main className="placeholder-canvas contact-canvas">
         <section className="placeholder-shell contact-shell" aria-labelledby="contact-title">
-          <div className="contact-intro"><p className="placeholder-kicker">Contact</p>
-          <h1 id="contact-title">Let’s talk.</h1>
-          <p className="placeholder-copy">Have a project, technical question, or professional opportunity in mind? Send a message and I will get back to you.</p></div>
-          <div className="contact-details"><h2>Elsewhere</h2>
+          <p className="placeholder-kicker">06 / Open channel</p>
+          <h1 id="contact-title">CONTACT</h1>
+          <p className="placeholder-copy">Have a project, technical question, or professional opportunity in mind? Send a message and I will get back to you.</p>
           <div className="placeholder-links">
             {data?.show_email && data.email && <a href={`mailto:${data.email}`}>{data.email}</a>}
             {data?.show_phone && data.phone_number && <a href={`tel:${data.phone_number}`}>{data.phone_number}</a>}
@@ -35,11 +35,10 @@ export default async function ContactPage() {
             {data?.linkedin_url && <a href={data.linkedin_url}>LinkedIn</a>}
             {data?.cv_url && <a href={data.cv_url}>CV / Resume</a>}
           </div>
-          {!data && <p className="placeholder-status">Contact links will appear here soon.</p>}</div>
+          {!data && <p className="placeholder-status">Contact links in progress.</p>}
           <ContactForm siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY} />
         </section>
       </main>
-      <SiteFooter />
     </>
   );
 }

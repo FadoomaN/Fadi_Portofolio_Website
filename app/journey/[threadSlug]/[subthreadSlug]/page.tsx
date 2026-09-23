@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import SiteHeader from '../../../site-header';
-import SiteFooter from '../../../site-footer';
 import CircuitDivider from '../../../circuit-divider';
 import { getThread, getSubthread, getSubthreadPost, getFeedbackSnapshot } from '@/lib/public-content';
 import EntryFeedback from '../../entry-feedback';
@@ -33,5 +32,5 @@ export default async function SubthreadPage({ params }: Props) {
       {post?.content&&<article className="journey-article-body"><p>{post.content}</p></article>}
       {post&&<EntryFeedback key={post.id} entryId={post.id} initialFeedback={feedback} />}
     </div>
-  </section></main><SiteFooter /></>;
+  </section></main></>;
 }

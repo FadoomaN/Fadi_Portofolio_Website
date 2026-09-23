@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import SiteHeader from '../../site-header';
-import SiteFooter from '../../site-footer';
 import CircuitDivider from '../../circuit-divider';
 import { getThread, getSubthreads } from '@/lib/public-content';
 import SearchableCards from '../searchable-cards';
@@ -26,5 +25,5 @@ export default async function ThreadPage({ params }: Props) {
     <section className="journey-subthreads" aria-labelledby="subthreads-title"><p>Thread space</p><h2 id="subthreads-title">SUBTHREADS</h2>
       <SearchableCards kind="subthreads" subthreads={subthreads} threadSlug={thread.slug} />
     </section>
-  </section></main><SiteFooter /></>;
+  </section></main></>;
 }
