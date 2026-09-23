@@ -19,6 +19,13 @@ export default async function ContactPage() {
     .select('email, phone_number, show_email, show_phone, github_url, linkedin_url, cv_url')
     .eq('id', 1)
     .maybeSingle();
+  const hasContactLinks = Boolean(
+    (data?.show_email && data.email)
+    || (data?.show_phone && data.phone_number)
+    || data?.github_url
+    || data?.linkedin_url
+    || data?.cv_url,
+  );
   return (
     <>
       <SiteHeader revealImmediately activeHref="/contact" />
@@ -29,14 +36,13 @@ export default async function ContactPage() {
             <p className="placeholder-kicker">06 / Open channel</p>
             <h1 id="contact-title">CONTACT</h1>
             <p className="placeholder-copy">Have a project, technical question, or professional opportunity in mind? Send a message and I will get back to you.</p>
-            <div className="placeholder-links" aria-label="Contact links">
+            {hasContactLinks && <div className="placeholder-links" aria-label="Contact links">
               {data?.show_email && data.email && <a href={`mailto:${data.email}`}>{data.email}</a>}
               {data?.show_phone && data.phone_number && <a href={`tel:${data.phone_number}`}>{data.phone_number}</a>}
               {data?.github_url && <a href={data.github_url}>GitHub</a>}
               {data?.linkedin_url && <a href={data.linkedin_url}>LinkedIn</a>}
               {data?.cv_url && <a href={data.cv_url}>CV / Resume</a>}
-            </div>
-            {!data && <p className="placeholder-status">Contact links in progress</p>}
+            </div>}
           </div>
           <ContactForm siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY} />
         </section>
