@@ -45,8 +45,10 @@ export function sameOrigin(request: Request) {
   }
 
   const allowedOrigins = new Set([
-    'https://admin.fadialhazim.com',
-  ]);
+      'https://fadialhazim.com',
+      'https://www.fadialhazim.com',
+      'https://admin.fadialhazim.com',
+    ]);
 
   return allowedOrigins.has(origin) || origin === new URL(request.url).origin;
 }
