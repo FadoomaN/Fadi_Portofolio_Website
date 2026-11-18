@@ -1,0 +1,74 @@
+.rich-text-editor {
+  display: grid;
+  gap: 1px;
+  border: 1px solid var(--panel-border);
+  background: var(--panel-border);
+}
+
+.rich-text-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  padding: 0.45rem;
+  background: var(--menu-surface);
+}
+
+.rich-text-toolbar button,
+.rich-text-toolbar select {
+  min-height: 1.9rem;
+  border: 1px solid var(--panel-border);
+  border-radius: 0;
+  padding: 0.35rem 0.48rem;
+  background: transparent;
+  color: var(--ink);
+  font: 800 0.62rem/1 Consolas, 'Courier New', monospace;
+}
+
+.rich-text-toolbar button.is-active {
+  border-color: var(--current);
+  background: color-mix(in srgb, var(--current) 12%, transparent);
+  color: var(--current);
+}
+
+.rich-text-editor .tiptap {
+  min-height: 12rem;
+  padding: 1rem;
+  background: var(--hero-surface);
+  color: var(--ink);
+  font: 400 1rem/1.7 Cambria, 'Times New Roman', serif;
+  outline: 0;
+}
+
+.rich-text-editor .tiptap p,
+.rich-text-editor .tiptap h2,
+.rich-text-editor .tiptap h3,
+.rich-text-editor .tiptap h4,
+.rich-text-editor .tiptap blockquote {
+  margin: 0 0 0.75rem;
+}
+
+.rich-text-editor .tiptap ul,
+.rich-text-editor .tiptap ol {
+  margin: 0 0 0.75rem;
+  padding-left: 1.4rem;
+}
+
+.rich-text-editor .tiptap a { color: var(--current); }
+.rich-text-editor .tiptap code { background: var(--paper); padding: 0.08rem 0.25rem; font-family: Consolas, 'Courier New', monospace; }
+.rich-text-editor .tiptap blockquote { border-left: 2px solid var(--current); padding-left: 0.9rem; color: var(--muted-ink); }
+
+.about-settings-panel .rich-text-editor,
+.about-admin-body .rich-text-editor { margin-top: 0.4rem; }
+.about-story-body > p:first-child { color: var(--ink); font-weight: 500; }
+.about-story-body > h2,
+.about-story-body > h3,
+.about-story-body > h4 { margin: 1.4rem 0 0.6rem; font-family: 'Arial Black', Arial, sans-serif; line-height: 1.05; }
+.about-story-body > ul,
+.about-story-body > ol { margin: 0 0 1rem; padding-left: 1.25rem; }
+
+@media (max-width: 42rem) {
+  .rich-text-toolbar { gap: 0.2rem; }
+  .rich-text-toolbar button,
+  .rich-text-toolbar select { min-height: 1.8rem; padding: 0.3rem; font-size: 0.58rem; }
+  .rich-text-editor .tiptap { min-height: 10rem; padding: 0.75rem; }
+}

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { authorizeAdmin, sameOrigin } from '@/lib/admin-auth';
+import { prepareAboutSections } from '@/lib/about';
+import { readJsonObject } from '@/lib/http';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -15,27 +17,14 @@ function text(value: unknown) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
-async function authorized() {
-  const supabase = await createServerSupabaseClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: 'Your session has expired.', status: 401 } as const;
-  const [{ data: membership }, { data: assurance }] = await Promise.all([
-    supabase.from('admin_users').select('user_id').eq('user_id', user.id).maybeSingle(),
-    supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
-  ]);
-  if (!membership || assurance?.currentLevel !== 'aal2') {
-    return { error: 'Authenticator verification is required.', status: 403 } as const;
-  }
-  return { supabase, user } as const;
-}
-
 export async function POST(request: NextRequest) {
-  const auth = await authorized();
+  if (!sameOrigin(request)) return NextResponse.json({ error: 'Invalid request origin.' }, { status: 403 });
+  const auth = await authorizeAdmin();
   if ('error' in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
   let body: Record<string, unknown>;
   try {
-    body = await request.json();
+    body = await readJsonObject(request);
   } catch {
     return NextResponse.json({ error: 'The content data is invalid.' }, { status: 400 });
   }
@@ -49,48 +38,23 @@ export async function POST(request: NextRequest) {
   if (!Number.isInteger(sortOrder)) return NextResponse.json({ error: 'Sort order must be a whole number.' }, { status: 400 });
 
   if (kind === 'about') {
-    const record = {
-      id: 1,
-      intro: text(body.intro),
-    };
-    const { data, error } = await auth.supabase.from('about_content').update({ intro: record.intro }).eq('id', 1).select().single();
-    if (error) return NextResponse.json({ error: 'About content could not be saved.' }, { status: 500 });
-    if (Array.isArray(body.sections)) {
-      const sections = body.sections.filter((section): section is Record<string, unknown> => Boolean(section) && typeof section === 'object').map((section, index) => {
-        const position = text(section.media_position) || 'right';
-        const shape = text(section.media_shape) || 'landscape';
-        if (!['left', 'right'].includes(position) || !['portrait', 'landscape', 'square'].includes(shape)) return null;
-        return {
-          ...(UUID.test(text(section.id)) ? { id: text(section.id) } : {}),
-          about_id: 1,
-          label: text(section.label),
-          heading: text(section.heading),
-          body: text(section.body),
-          media_reference: text(section.media_reference) || null,
-          media_alt: text(section.media_alt),
-          media_position: position,
-          media_shape: shape,
-          meta: text(section.meta),
-          sort_order: Number.isInteger(Number(section.sort_order)) ? Number(section.sort_order) : index,
-        };
-      });
-      if (sections.some((section) => section === null)) return NextResponse.json({ error: 'About section media settings are invalid.' }, { status: 400 });
-      const validSections = sections as Record<string, unknown>[];
-      const submittedIds = validSections.map((section) => section.id).filter((value): value is string => typeof value === 'string');
-      const { data: existingSections, error: existingError } = await auth.supabase.from('about_sections').select('id').eq('about_id', 1);
-      if (existingError) return NextResponse.json({ error: 'About sections could not be loaded.' }, { status: 500 });
-      const removedIds = (existingSections ?? []).map((section) => section.id).filter((sectionId) => !submittedIds.includes(sectionId));
-      const { error: deleteError } = removedIds.length
-        ? await auth.supabase.from('about_sections').delete().in('id', removedIds)
-        : { error: null };
-      if (deleteError) return NextResponse.json({ error: 'About sections could not be removed.' }, { status: 500 });
-      const { error: sectionError } = validSections.length
-        ? await auth.supabase.from('about_sections').upsert(validSections)
-        : await auth.supabase.from('about_sections').delete().eq('about_id', 1);
-      if (sectionError) return NextResponse.json({ error: 'About sections could not be saved.' }, { status: 500 });
+    const intro = text(body.intro);
+    if (typeof body.intro !== 'string' || intro.length > 20000) {
+      return NextResponse.json({ error: 'Use an introduction of up to 20,000 characters.' }, { status: 400 });
+    }
+    let sections;
+    try {
+      sections = body.sections === undefined ? null : prepareAboutSections(body.sections);
+    } catch (reason) {
+      return NextResponse.json({ error: reason instanceof Error ? reason.message : 'Invalid About sections.' }, { status: 400 });
+    }
+    const { data, error } = await auth.supabase.rpc('save_about', { p_intro: intro, p_sections: sections });
+    if (error || !data?.record || !Array.isArray(data.sections)) {
+      return NextResponse.json({ error: 'About could not be saved. Your edits are still here.' }, { status: 503 });
     }
     revalidatePath('/about');
-    return NextResponse.json({ ok: true, record: data });
+    revalidatePath('/admin');
+    return NextResponse.json({ ok: true, record: data.record, sections: data.sections }, { headers: { 'Cache-Control': 'private, no-store' } });
   }
 
   if (kind === 'contact') {
@@ -141,6 +105,8 @@ export async function POST(request: NextRequest) {
       : auth.supabase.from('about_sections').insert(sectionRecord);
     const { data, error } = await query.select().single();
     if (error) return NextResponse.json({ error: 'The About section could not be saved.' }, { status: 500 });
+    revalidatePath('/about');
+    revalidatePath('/admin');
     return NextResponse.json({ ok: true, record: data });
   }
 
@@ -228,10 +194,11 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const auth = await authorized();
+  if (!sameOrigin(request)) return NextResponse.json({ error: 'Invalid request origin.' }, { status: 403 });
+  const auth = await authorizeAdmin();
   if ('error' in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
   let body: { kind?: unknown; id?: unknown };
-  try { body = await request.json(); } catch { return NextResponse.json({ error: 'The delete request is invalid.' }, { status: 400 }); }
+  try { body = await readJsonObject(request); } catch { return NextResponse.json({ error: 'The delete request is invalid.' }, { status: 400 }); }
   const kind = text(body.kind);
   const id = text(body.id);
   if (kind === 'thread') return NextResponse.json({ error: 'Delete Threads in the Threads editor after confirming the title.' }, { status: 400 });
@@ -239,5 +206,6 @@ export async function DELETE(request: NextRequest) {
   if (!table || !UUID.test(id)) return NextResponse.json({ error: 'The selected record is invalid.' }, { status: 400 });
   const { error } = await auth.supabase.from(table).delete().eq('id', id);
   if (error) return NextResponse.json({ error: 'The content could not be deleted.' }, { status: 500 });
+  if (kind === 'about-section') { revalidatePath('/about'); revalidatePath('/admin'); }
   return NextResponse.json({ ok: true });
 }

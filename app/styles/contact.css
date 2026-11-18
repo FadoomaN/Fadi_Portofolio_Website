@@ -1,0 +1,126 @@
+.contact-shell {
+  display: grid;
+  width: min(100%, 82rem);
+  margin: 0 auto;
+  grid-template-columns: minmax(18rem, 0.8fr) minmax(0, 1.2fr);
+  gap: clamp(2.5rem, 6vw, 6rem);
+  align-items: start;
+}
+
+.contact-canvas { background:var(--engineering-background); background-size:3rem 3rem; padding-top: clamp(3rem, 5vw, 4.5rem); }
+.contact-intro { position: sticky; top: 7rem; min-width: 0; }
+.contact-intro h1 { font-size: clamp(3.5rem, 6.4vw, 5.7rem); }
+.contact-form { display: grid; gap: 1rem; border-left: 1px solid var(--panel-border); padding-left: clamp(1.5rem, 3vw, 3rem); }
+.contact-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.contact-form label { display: grid; gap: 0.45rem; color: var(--muted-ink); font: 900 0.65rem/1.2 'Arial Black', Arial, sans-serif; letter-spacing: 0.06em; text-transform: uppercase; }
+.contact-form input,
+.contact-form textarea { width: 100%; box-sizing: border-box; border: 1px solid var(--panel-border); border-radius: 0; outline: 0; padding: 0.9rem; background: color-mix(in srgb, var(--paper) 88%, var(--hero-surface-alt)); color: var(--ink); font: 500 0.95rem/1.5 Arial, sans-serif; text-transform: none; transition: border-color 160ms ease, box-shadow 160ms ease; }
+.contact-form input:focus,
+.contact-form textarea:focus { border-color: var(--current); box-shadow: 0 0 0 1px var(--current); }
+.contact-form textarea { min-height: 12rem; resize: vertical; }
+.contact-honeypot { position: absolute !important; left: -10000px !important; }
+.contact-form-actions { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding-top: 0.5rem; }
+.contact-form-actions p { margin: 0.25rem 0; }
+.contact-form-error { color: #d98484; }
+.contact-form-success { color: var(--current); }
+.contact-form button { min-height: 3.1rem; border: 1px solid var(--current); border-radius: 0; padding: 0.8rem 1.15rem; background: color-mix(in srgb, var(--current) 12%, transparent); color: var(--ink); font: 900 0.68rem/1 'Arial Black', Arial, sans-serif; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; }
+.contact-form button:disabled { cursor: default; opacity: 0.45; }
+
+.admin-contact-window { display: block; }
+.admin-contact-settings { min-height: 0; grid-template-columns: minmax(0, 1fr); background: var(--hero-surface); }
+.admin-contact-settings .admin-profile-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.admin-contact-settings .admin-profile-actions { display: flex; min-height: 4.5rem; justify-content: flex-end; align-items: stretch; gap: 1px; border-top: 1px solid var(--panel-border); background: var(--hero-surface); }
+.admin-contact-settings .admin-profile-actions > p { display: flex; flex: 1; align-items: center; margin: 0; padding: 0 1.2rem; }
+.admin-contact-settings .admin-profile-save { min-width: 11rem; justify-content: center; background: var(--current); color: #041014; }
+
+.admin-contact-visibility { align-content: start; margin: 0; border: 0; padding: 0; }
+.admin-contact-visibility > legend { display: block; width: auto; margin: 0 0 0.45rem; border: 0; padding: 0; color: var(--muted-ink); font: 900 0.56rem/1 'Arial Black', Arial, sans-serif; letter-spacing: 0.09em; text-transform: uppercase; }
+.admin-toggle-control { position: relative; display: grid; min-height: 2.35rem; grid-template-columns: 2.25rem minmax(0, 1fr); align-items: center; gap: 0.65rem; cursor: pointer; }
+.admin-toggle-control input { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; }
+.admin-toggle-control > span { position: relative; width: 2.25rem; height: 1.15rem; border: 1px solid var(--panel-border); background: var(--paper); transition: border-color 160ms ease, background-color 160ms ease; }
+.admin-toggle-control > span::after { position: absolute; top: 0.17rem; left: 0.18rem; width: 0.68rem; height: 0.68rem; background: var(--muted-ink); content: ''; transition: transform 160ms ease, background-color 160ms ease; }
+.admin-toggle-control input:checked + span { border-color: var(--current); background: color-mix(in srgb, var(--current) 13%, var(--paper)); }
+.admin-toggle-control input:checked + span::after { background: var(--current); transform: translateX(1rem); }
+.admin-toggle-control input:focus-visible + span { outline: 2px solid var(--current); outline-offset: 2px; }
+.admin-toggle-control strong { color: var(--ink); font: 700 0.72rem/1.3 Arial, sans-serif; }
+
+.admin-contact-inbox { display: grid; min-height: 25rem; grid-template-columns: minmax(14rem, 20rem) minmax(0, 1fr); margin: 1px clamp(1rem, 2vw, 2rem) clamp(1rem, 2vw, 2rem); border: 1px solid var(--panel-border); background: var(--hero-surface); }
+.admin-contact-inbox aside { display: flex; flex-direction: column; border-right: 1px solid var(--panel-border); background: var(--menu-surface); }
+.admin-contact-inbox aside > strong,
+.admin-contact-inbox aside button,
+.admin-contact-inbox > section { padding: 1rem; }
+.admin-contact-inbox aside button { display: grid; gap: 0.25rem; border: 0; border-top: 1px solid var(--panel-border); border-radius: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; }
+.admin-contact-inbox aside button.is-active { box-shadow: inset 3px 0 var(--current); background: color-mix(in srgb, var(--current) 9%, var(--hero-surface-alt)); }
+.admin-contact-inbox aside button.is-new span { color: var(--current); font-weight: 900; }
+.admin-contact-inbox > section { min-width: 0; }
+.admin-contact-inbox section header { border-bottom: 1px solid var(--panel-border); padding-bottom: 1rem; }
+.admin-contact-message { max-width: 52rem; white-space: pre-wrap; line-height: 1.7; }
+.admin-inbox-empty { display: grid; min-height: 21rem; place-content: center; justify-items: center; gap: 0.5rem; text-align: center; }
+.admin-inbox-empty span { color: color-mix(in srgb, var(--ink) 10%, transparent); font: 900 clamp(4rem, 8vw, 7rem)/0.8 'Arial Black', Arial, sans-serif; }
+.admin-inbox-empty strong { font: 900 1rem/1 'Arial Black', Arial, sans-serif; text-transform: uppercase; }
+.admin-inbox-empty p { margin: 0; color: var(--muted-ink); font-size: 0.75rem; }
+
+.admin-security-center { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; padding: clamp(1rem, 2vw, 2rem); background: var(--hero-surface); }
+.admin-security-center > section { min-width: 0; border: 1px solid var(--panel-border); padding: clamp(1.2rem, 2vw, 2rem); background: var(--paper); }
+.admin-security-center section > header { display: flex; align-items: baseline; gap: 0.75rem; margin-bottom: 1.4rem; border-bottom: 2px solid var(--panel-border); padding-bottom: 0.8rem; }
+.admin-security-center section > header span { color: var(--current); font: 900 0.65rem/1 Consolas, monospace; }
+.admin-security-center h3 { margin: 0; font: 900 clamp(1.35rem, 2vw, 2rem)/1 'Arial Black', Arial, sans-serif; letter-spacing: -0.03em; text-transform: uppercase; }
+.admin-security-center form,
+.admin-security-center label { display: grid; gap: 0.5rem; }
+.admin-security-center form { gap: 0.8rem; }
+.admin-security-center label,
+.admin-security-center dt { color: var(--muted-ink); font: 800 0.68rem/1.3 Arial, sans-serif; letter-spacing: 0.03em; text-transform: uppercase; }
+.admin-security-center input { min-height: 2.8rem; border: 1px solid var(--panel-border); border-radius: 0; outline: 0; padding: 0.7rem; background: var(--paper); color: var(--ink); }
+.admin-security-center input:focus { border-color: var(--current); box-shadow: 0 0 0 1px var(--current); }
+.admin-security-center button { min-height: 2.75rem; border: 1px solid var(--panel-border); border-radius: 0; padding: 0.65rem 0.8rem; background: transparent; color: var(--ink); font: 900 0.62rem/1 'Arial Black', Arial, sans-serif; letter-spacing: 0.04em; text-transform: uppercase; cursor: pointer; }
+.admin-security-center form button,
+.security-enrollment button { border-color: var(--current); background: color-mix(in srgb, var(--current) 12%, transparent); }
+.admin-security-center button:disabled { cursor: default; opacity: 0.45; }
+.admin-security-center article,
+.admin-security-actions { display: flex; justify-content: space-between; gap: 0.75rem; align-items: center; }
+.admin-security-center article { margin: 0.8rem 0; border: 1px solid var(--panel-border); padding: 0.9rem; }
+.admin-security-center article.is-active { border-left: 3px solid var(--current); }
+.admin-security-center article div { display: grid; gap: 0.25rem; }
+.admin-security-center article small { color: var(--muted-ink); }
+.admin-security-center article small b { color: var(--current); }
+.admin-security-center dl { margin: 0; }
+.admin-security-center dl div { display: flex; justify-content: space-between; gap: 1rem; border-top: 1px solid var(--panel-border); padding: 0.75rem 0; }
+.admin-security-center dd { margin: 0; overflow-wrap: anywhere; font-weight: 800; }
+.admin-security-center .security-enrollment { display: grid; grid-template-columns: minmax(8rem, 11rem) minmax(0, 1fr); gap: 1rem; margin-top: 1rem; border-left: 2px solid var(--current); padding: 1rem; background: var(--menu-surface); }
+.admin-security-center .security-enrollment img { width: 100%; max-width: 11rem; grid-row: 1 / 4; background: #fff; }
+.admin-security-actions { justify-content: start; flex-wrap: wrap; }
+.admin-security-actions button:last-child { border-color: #935a5a; color: #e6a1a1; }
+.admin-security-center > .admin-profile-error,
+.admin-security-center > .admin-profile-notice { grid-column: 1 / -1; padding: 0.75rem 1rem; background: var(--hero-surface); }
+
+@media (max-width: 70rem) {
+  .contact-shell { grid-template-columns: minmax(15rem, 0.7fr) minmax(0, 1.3fr); gap: 2rem; }
+  .admin-quick-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admin-quick-metrics article:nth-child(even) { border-right: 0; }
+  .admin-quick-metrics article:nth-child(n + 3) { border-top: 1px solid var(--panel-border); }
+  .admin-contact-settings .admin-profile-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admin-security-center { padding: 1rem; }
+}
+
+@media (max-width: 48rem) {
+  .contact-shell { grid-template-columns: 1fr; }
+  .contact-intro { position: static; }
+  .contact-form { border-top: 1px solid var(--panel-border); border-left: 0; padding-top: 1.5rem; padding-left: 0; }
+  .admin-contact-settings .admin-profile-fields,
+  .admin-security-center { grid-template-columns: 1fr; }
+  .admin-contact-inbox { grid-template-columns: 1fr; }
+  .admin-contact-inbox aside { max-height: 16rem; overflow: auto; border-right: 0; border-bottom: 1px solid var(--panel-border); }
+}
+
+@media (max-width: 42rem) {
+  .contact-form-grid { grid-template-columns: 1fr; }
+  .contact-form-actions { display: grid; }
+  .contact-form button { justify-self: start; }
+  .admin-profile-window .admin-profile-fields { grid-template-columns: 1fr; }
+  .admin-profile-window .admin-profile-upload { width: min(100%, 15rem); }
+  .admin-contact-settings .admin-profile-actions { flex-wrap: wrap; }
+  .admin-contact-settings .admin-profile-actions > p { min-height: 2.75rem; flex-basis: 100%; }
+  .admin-contact-settings .admin-profile-save { width: 100%; min-height: 3.25rem; }
+  .admin-security-center .security-enrollment { grid-template-columns: 1fr; }
+  .admin-security-center .security-enrollment img { grid-row: auto; }
+}

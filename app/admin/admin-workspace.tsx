@@ -6,36 +6,17 @@ import ContentManager from './content-manager';
 import ProjectManager from './project-manager';
 import ContactInbox from './contact-inbox';
 import SecurityCenter from './security-center';
+import AboutBasicsEditor from './about-editor';
+import FooterEditor from './footer-editor';
+import RichTextEditor from './rich-text-editor';
+import { serializeRichText } from '@/lib/rich-text';
+import type { AboutRecord, AboutSectionRecord } from '@/lib/about';
+import type { FooterSettings } from '@/lib/footer';
 import type { Thread } from '@/lib/content';
 import type { Project } from '@/lib/projects';
 
 type PanelId = 'overview' | 'news' | 'profile' | 'about' | 'threads' | 'career' | 'contact' | 'security';
 type NewsRecord = { id:string; slug:string; title:string; body:string; media_reference:string|null; media_alt:string|null; published_at:string; created_at:string; updated_at:string };
-
-type AboutRecord = {
-  id: number;
-  title: string;
-  intro: string;
-  body: string;
-  sections: unknown[];
-  media_reference: string | null;
-  updated_at: string;
-};
-
-type AboutSectionRecord = {
-  id: string;
-  about_id: number;
-  label: string;
-  heading: string;
-  body: string;
-  media_reference: string | null;
-  media_alt: string;
-  media_position: 'left' | 'right';
-  media_shape: 'portrait' | 'landscape' | 'square';
-  meta: string;
-  sort_order: number;
-  updated_at: string;
-};
 
 type PublicContactRecord = {
   id: number;
@@ -88,6 +69,7 @@ type AdminWorkspaceProps = {
   profile: ProfileRecord | null;
   news: NewsRecord[];
   projects: Project[];
+  footer: FooterSettings | null;
 };
 
 type ExperienceFormState = {
@@ -407,7 +389,7 @@ function ExperienceEditor({ experiences }: { experiences: ExperienceRecord[] }) 
           </label>
           <label className="admin-experience-field admin-experience-summary">
             <span>Summary</span>
-            <textarea name="summary" value={form.summary} onChange={handleChange} maxLength={2000} rows={5} placeholder="What you built, learned or contributed." />
+            <RichTextEditor value={form.summary} onChange={(value) => setForm((current) => ({ ...current, summary: serializeRichText(value) }))} />
             <small>{form.summary.length} / 2000</small>
           </label>
         </div>
@@ -602,187 +584,6 @@ function ProfileEditor({ profile }: { profile: ProfileRecord | null }) {
   );
 }
 
-function AboutEditor({ about, sections }: { about: AboutRecord | null; sections: AboutSectionRecord[] }) {
-  const [settings, setSettings] = useState({ title: about?.title ?? 'ABOUT', intro: about?.intro ?? '' });
-  const [savedSettings, setSavedSettings] = useState(settings);
-  const [records, setRecords] = useState(sections);
-  const [selectedId, setSelectedId] = useState<string | null>(sections[0]?.id ?? null);
-  const [draft, setDraft] = useState<AboutSectionRecord | null>(sections[0] ?? null);
-  const [notice, setNotice] = useState('');
-  const [error, setError] = useState('');
-
-  const selectSection = (section: AboutSectionRecord) => {
-    setSelectedId(section.id);
-    setDraft(section);
-    setError('');
-    setNotice('');
-  };
-  const updateDraft = (key: keyof AboutSectionRecord, value: string | number) => {
-    setDraft((current) => current ? { ...current, [key]: value } : current);
-  };
-  const saveSettings = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const response = await fetch('/api/admin/content', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'about', title: settings.title, intro: settings.intro, body: about?.body ?? '' }) });
-    const result = await response.json() as { error?: string; record?: AboutRecord };
-    if (!response.ok) setError(result.error ?? 'Page settings could not be saved.');
-    else { setSavedSettings(settings); setNotice('Page settings saved.'); }
-  };
-  const saveSection = async () => {
-    if (!draft) return;
-    const response = await fetch('/api/admin/content', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'about-section', id: draft.id, label: draft.label, heading: draft.heading, body: draft.body, mediaReference: draft.media_reference, mediaAlt: draft.media_alt, mediaPosition: draft.media_position, mediaShape: draft.media_shape, meta: draft.meta, sortOrder: draft.sort_order }) });
-    const result = await response.json() as { error?: string; record?: AboutSectionRecord };
-    if (!response.ok || !result.record) setError(result.error ?? 'Section could not be saved.');
-    else { setRecords((current) => current.map((item) => item.id === result.record?.id ? result.record as AboutSectionRecord : item)); setDraft(result.record); setNotice('Section saved.'); }
-  };
-  const createSection = async () => {
-    const response = await fetch('/api/admin/content', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'about-section', title: 'New section', label: 'New section', heading: '', body: '', mediaPosition: 'right', mediaShape: 'landscape', sortOrder: records.length }) });
-    const result = await response.json() as { record?: AboutSectionRecord; error?: string };
-    if (!response.ok || !result.record) setError(result.error ?? 'Section could not be created.');
-    else { setRecords((current) => [...current, result.record as AboutSectionRecord]); selectSection(result.record as AboutSectionRecord); setNotice('New section created.'); }
-  };
-  const deleteSection = async () => {
-    if (!draft?.id) return;
-    const response = await fetch('/api/admin/content', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'about-section', id: draft.id }) });
-    if (!response.ok) setError('Section could not be deleted.');
-    else { const next = records.filter((item) => item.id !== draft.id); setRecords(next); setDraft(next[0] ?? null); setSelectedId(next[0]?.id ?? null); setNotice('Section deleted.'); }
-  };
-  const uploadSectionImage = async (file: File) => {
-    if (!draft) return;
-    try { updateDraft('media_reference', await uploadMedia(file)); setNotice('Image uploaded. Save section to persist it.'); }
-    catch (uploadError) { setError(uploadError instanceof Error ? uploadError.message : 'The image could not be uploaded.'); }
-  };
-
-  return <div className="about-admin-editor">
-    <header className="about-admin-header"><div><span>Content management / 03</span><h2>About editor</h2><p>Manage the About page and its editorial sections.</p></div><a href="/about" target="_blank" rel="noreferrer">Preview page ↗</a></header>
-    <form className="about-admin-settings" onSubmit={saveSettings}><div><span>Page settings</span><p>These fields control the public About introduction.</p></div><label><span>Page title</span><input value={settings.title} onChange={(event) => setSettings({ ...settings, title: event.target.value })} /></label><label><span>Intro paragraph</span><textarea rows={3} value={settings.intro} onChange={(event) => setSettings({ ...settings, intro: event.target.value })} /></label><button className="admin-profile-save" type="submit" disabled={settings.title === savedSettings.title && settings.intro === savedSettings.intro}>Save settings</button></form>
-    <div className="about-admin-sections"><aside className="about-admin-browser"><div className="about-admin-browser-heading"><div><span>Repeatable content</span><h3>About sections</h3></div><button type="button" onClick={createSection}>+ New section</button></div>{records.map((section, index) => <button type="button" className={selectedId === section.id ? 'is-active' : ''} key={section.id} onClick={() => selectSection(section)}><strong>{String(index + 1).padStart(2, '0')}</strong><span>{section.heading || 'Untitled section'}</span><small>{section.media_shape} · {section.media_position}{section.media_reference ? ' · image' : ''}</small></button>)}{!records.length && <p className="admin-empty-state">No sections yet. Create the first one.</p>}</aside>
-      <section className="about-admin-section-editor"><div className="about-admin-editor-heading"><div><span>Selected record</span><h3>Edit section</h3></div>{draft && <strong>{String((records.findIndex((item) => item.id === draft.id) + 1)).padStart(2, '0')}</strong>}</div>{draft ? <div className="about-admin-fields"><label><span>Section label</span><input value={draft.label} onChange={(event) => updateDraft('label', event.target.value)} /></label><label><span>Heading</span><input value={draft.heading} onChange={(event) => updateDraft('heading', event.target.value)} /></label><label className="about-admin-body"><span>Body / paragraph</span><textarea rows={10} value={draft.body} onChange={(event) => updateDraft('body', event.target.value)} /></label><div className="about-admin-media"><div><span>Media</span><strong>{draft.media_reference ? 'Image attached' : 'No image attached'}</strong></div>{draft.media_reference && <div className={`admin-media-preview is-${draft.media_shape}`}><img src={draft.media_reference} alt={draft.media_alt} /></div>}<label className="admin-upload-button">Upload image<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadSectionImage(file); }} /></label><label><span>Image alt text</span><input value={draft.media_alt} onChange={(event) => updateDraft('media_alt', event.target.value)} /></label><label><span>Image position</span><select value={draft.media_position} onChange={(event) => updateDraft('media_position', event.target.value)}><option value="left">Left</option><option value="right">Right</option></select></label><label><span>Image format</span><select value={draft.media_shape} onChange={(event) => updateDraft('media_shape', event.target.value)}><option value="portrait">Portrait</option><option value="landscape">Landscape</option><option value="square">Square</option></select></label><label><span>Sort order</span><input type="number" value={draft.sort_order} onChange={(event) => updateDraft('sort_order', Number(event.target.value))} /></label></div><div className="about-admin-actions"><button type="button" className="admin-experience-delete" onClick={deleteSection}>Delete section</button><span className="admin-profile-notice">{notice}</span><button type="button" className="admin-profile-save" onClick={saveSection}>Save section</button></div></div> : <p className="admin-empty-state">Select a section or create a new one.</p>}</section>
-    </div><p className="admin-profile-error" role="alert">{error}</p>
-  </div>;
-}
-
-function AboutBasicsEditor({ about, sections }: { about: AboutRecord | null; sections: AboutSectionRecord[] }) {
-  const [intro, setIntro] = useState(about?.intro ?? '');
-  const [savedIntro, setSavedIntro] = useState(intro);
-  const [records, setRecords] = useState(sections);
-  const [savedRecords, setSavedRecords] = useState(sections);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [notice, setNotice] = useState('');
-  const [error, setError] = useState('');
-  const dirty = intro !== savedIntro || JSON.stringify(records) !== JSON.stringify(savedRecords);
-
-  const updateSection = (id: string, key: keyof AboutSectionRecord, value: string | number) => {
-    setRecords((current) => current.map((section) => section.id === id ? { ...section, [key]: value } : section));
-  };
-
-  const saveAbout = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (records.some((section) => !section.label.trim() || !section.heading.trim())) {
-      setError('Every section needs a label and heading.');
-      return;
-    }
-    const response = await fetch('/api/admin/content', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ kind: 'about', intro, sections: records }),
-    });
-    const result = await response.json() as { error?: string; record?: AboutRecord };
-    if (!response.ok) setError(result.error ?? 'About introduction could not be saved.');
-    else { setSavedIntro(intro); setSavedRecords(records); setNotice('About saved. Public page updated.'); setError(''); }
-  };
-
-  const createSection = async () => {
-    const section: AboutSectionRecord = {
-      id: `new-${crypto.randomUUID()}`, about_id: 1, label: '', heading: '', body: '',
-      media_reference: null, media_alt: '', media_position: 'left', media_shape: 'portrait',
-      meta: '', sort_order: records.length, updated_at: '',
-    };
-    setRecords((current) => [...current, section]);
-    setExpandedId(section.id);
-    setError('');
-  };
-
-  const moveSection = (id: string, direction: -1 | 1) => {
-    setRecords((current) => {
-      const index = current.findIndex((section) => section.id === id);
-      const target = index + direction;
-      if (index < 0 || target < 0 || target >= current.length) return current;
-      const next = [...current];
-      [next[index], next[target]] = [next[target], next[index]];
-      return next.map((section, order) => ({ ...section, sort_order: order }));
-    });
-  };
-
-  const removeSection = (id: string) => {
-    const section = records.find((item) => item.id === id);
-    if (section && !section.id.startsWith('new-') && !window.confirm('Delete this About section permanently?')) return;
-    setRecords((current) => current.filter((item) => item.id !== id).map((item, order) => ({ ...item, sort_order: order })));
-    setExpandedId(null);
-  };
-
-  const uploadSectionImage = async (id: string, file: File) => {
-    try {
-      const reference = await uploadMedia(file);
-      updateSection(id, 'media_reference', reference);
-      setNotice('Image uploaded. Save About to publish it.');
-    } catch (uploadError) {
-      setError(uploadError instanceof Error ? uploadError.message : 'The image could not be uploaded.');
-    }
-  };
-
-  return (
-    <div className="about-basics-editor">
-      <header className="about-admin-header">
-        <div><span>Content management / 03</span><h2>About editor</h2><p>Manage the About Me page and its introduction.</p></div>
-        <a href="/about" target="_blank" rel="noreferrer">Preview page ↗</a>
-      </header>
-
-      <form id="about-settings-form" className="about-settings-panel" onSubmit={saveAbout}>
-        <div className="about-settings-copy"><span>Page settings</span><p>Public introduction shown at the top of About Me.</p></div>
-        <label><span>Intro paragraph</span><textarea rows={4} value={intro} onChange={(event) => setIntro(event.target.value)} /></label>
-      </form>
-
-      <div className="about-basic-sections">
-        <section className="about-basic-list">
-          <div className="about-basic-list-heading"><span>Content workspace</span><h3>About sections</h3></div>
-          {records.length ? records.map((section, index) => <article className="about-basic-accordion" key={section.id}>
-            <button type="button" className="about-basic-row" onClick={() => setExpandedId(expandedId === section.id ? null : section.id)}>
-              <strong>{String(index + 1).padStart(2, '0')}</strong><span>{section.heading || 'Untitled section'}</span><small>{section.media_shape} · {section.media_position}</small>
-            </button>
-            {expandedId === section.id && <div className="about-basic-expanded">
-              <div className="about-admin-fields">
-                <label><span>Section label</span><input value={section.label} onChange={(event) => updateSection(section.id, 'label', event.target.value)} /></label>
-                <label><span>Heading</span><input value={section.heading} onChange={(event) => updateSection(section.id, 'heading', event.target.value)} /></label>
-                <label className="about-admin-body"><span>Body</span><textarea rows={8} value={section.body} onChange={(event) => updateSection(section.id, 'body', event.target.value)} /></label>
-                <label><span>Meta label</span><input value={section.meta} onChange={(event) => updateSection(section.id, 'meta', event.target.value)} /></label>
-                <div className="about-admin-media">
-                  {section.media_reference && <div className={`admin-media-preview is-${section.media_shape}`}><img src={section.media_reference} alt={section.media_alt} /></div>}
-                  <label className="admin-upload-button">Upload / replace image<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadSectionImage(section.id, file); }} /></label>
-                  {section.media_reference && <button type="button" className="admin-profile-reset" onClick={() => updateSection(section.id, 'media_reference', '')}>Remove image</button>}
-                  <label><span>Image alt text</span><input value={section.media_alt} onChange={(event) => updateSection(section.id, 'media_alt', event.target.value)} /></label>
-                  <label><span>Image position</span><select value={section.media_position} onChange={(event) => updateSection(section.id, 'media_position', event.target.value)}><option value="left">Left</option><option value="right">Right</option></select></label>
-                  <label><span>Image format</span><select value={section.media_shape} onChange={(event) => updateSection(section.id, 'media_shape', event.target.value)}><option value="portrait">Portrait</option><option value="landscape">Landscape</option><option value="square">Square</option></select></label>
-                </div>
-              </div>
-              <div className="about-basic-expanded-actions">
-                <button type="button" onClick={() => moveSection(section.id, -1)} disabled={index === 0}>↑ Move up</button>
-                <button type="button" onClick={() => moveSection(section.id, 1)} disabled={index === records.length - 1}>↓ Move down</button>
-                <button type="button" className="admin-experience-delete" onClick={() => removeSection(section.id)}>Delete section</button>
-              </div>
-            </div>}
-          </article>) : <div className="about-basic-empty"><strong>No About sections yet</strong><p>Create sections to build the public About page.</p></div>}
-          <button className="about-basic-add" type="button" onClick={createSection}>+ Add new section</button>
-        </section>
-      </div>
-      <div className="admin-profile-actions about-settings-actions">
-        <div><p className="admin-profile-error" role="alert">{error}</p><p className="admin-profile-notice" role="status">{notice}</p>{!error && !notice && <small>{dirty ? 'Unsaved changes' : 'No unsaved changes'}</small>}</div>
-        <button className="admin-profile-reset" type="button" onClick={() => { setIntro(savedIntro); setRecords(savedRecords); setExpandedId(null); setError(''); setNotice(''); }} disabled={!dirty}>Reset changes</button>
-        <button className="admin-profile-save" form="about-settings-form" type="submit" disabled={!dirty}><span>Save About</span><span aria-hidden="true">→</span></button>
-      </div>
-    </div>
-  );
-}
-
 function ContactEditor({ contact }: { contact: PublicContactRecord | null }) {
   const [form, setForm] = useState({ email: contact?.email ?? '', phoneNumber: contact?.phone_number ?? '', showEmail: contact?.show_email ?? false, showPhone: contact?.show_phone ?? false, githubUrl: contact?.github_url ?? '', linkedinUrl: contact?.linkedin_url ?? '', cvUrl: contact?.cv_url ?? '' });
   const [notice, setNotice] = useState('');
@@ -849,6 +650,7 @@ export default function AdminWorkspace({
   profile,
   news,
   projects,
+  footer,
 }: AdminWorkspaceProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -886,7 +688,7 @@ export default function AdminWorkspace({
         <button ref={compactToggleRef} type="button" className="admin-compact-toggle" aria-expanded={compactMenuOpen} aria-controls="admin-compact-menu" onClick={() => setCompactMenuOpen(open => !open)}>
           ADMIN / {activeItem.label} <span className="admin-compact-caret" aria-hidden="true">▾</span>
         </button>
-        <nav id="admin-compact-menu" className={`admin-compact-menu${compactMenuOpen ? ' is-open' : ''}`} aria-label="Admin modules" aria-hidden={!compactMenuOpen} inert={compactMenuOpen ? undefined : ''}>
+        <nav id="admin-compact-menu" className={`admin-compact-menu${compactMenuOpen ? ' is-open' : ''}`} aria-label="Admin modules" aria-hidden={!compactMenuOpen} inert={!compactMenuOpen}>
           {menuItems.map(item => <button type="button" key={item.id} aria-current={activePanel === item.id ? 'page' : undefined} onClick={() => choosePanel(item.id)}>{item.label}</button>)}
           <form action="/api/auth/logout" method="post"><button type="submit">Sign out</button></form>
         </nav>
@@ -981,7 +783,7 @@ export default function AdminWorkspace({
           {activePanel === 'news' && <NewsManager news={news} />}
 
           {activePanel === 'profile' && (
-            <div className="admin-module-window admin-profile-window"><div className="admin-module-heading"><div><span>Public identity / 03</span><h2>Profile</h2></div><strong>03</strong></div><ProfileEditor profile={profile} /></div>
+            <div className="admin-module-window admin-profile-window"><div className="admin-module-heading"><div><span>Public identity / 03</span><h2>Profile</h2></div><strong>03</strong></div><ProfileEditor profile={profile} /><FooterEditor settings={footer} /></div>
           )}
 
           {activePanel === 'about' && (

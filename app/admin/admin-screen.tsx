@@ -4,6 +4,13 @@ import AdminWorkspace from './admin-workspace';
 
 export const dynamic = 'force-dynamic';
 
+async function loadAboutSections(db: Awaited<ReturnType<typeof createServerSupabaseClient>>) {
+  const result = await db.from('about_sections').select('id, about_id, label, heading, body, media_reference, media_alt, media_position, media_shape, media_position_x, media_position_y, meta, sort_order, updated_at').eq('about_id', 1).order('sort_order').order('created_at');
+  if (!result.error) return result;
+  const fallback = await db.from('about_sections').select('id, about_id, label, heading, body, media_reference, media_alt, media_position, media_shape, meta, sort_order, updated_at').eq('about_id', 1).order('sort_order').order('created_at');
+  return { ...fallback, data: fallback.data?.map((section) => ({ ...section, media_position_x: 50, media_position_y: 50 })) ?? null };
+}
+
 export default async function AdminPage() {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -39,6 +46,7 @@ export default async function AdminPage() {
     categoryResult,
     newsResult,
     projectsResult,
+    footerResult,
   ] = await Promise.all([
     supabase
       .from('experiences')
@@ -51,12 +59,13 @@ export default async function AdminPage() {
       .eq('id', 1)
       .maybeSingle(),
     supabase.from('about_content').select('id, title, intro, body, sections, media_reference, updated_at').eq('id', 1).maybeSingle(),
-    supabase.from('about_sections').select('id, about_id, label, heading, body, media_reference, media_alt, media_position, media_shape, meta, sort_order, updated_at').eq('about_id', 1).order('sort_order').order('created_at'),
+    loadAboutSections(supabase),
     supabase.from('public_contact_settings').select('id, email, phone_number, show_email, show_phone, github_url, linkedin_url, cv_url, updated_at').eq('id', 1).maybeSingle(),
     supabase.from('threads').select('id, title, slug, destination, category, description, technical_description, cover_media_reference, cover_position_x, cover_position_y, github_url, live_url, tags, status, featured, sort_order, updated_at', { count: 'exact' }).eq('destination','journey').order('sort_order').order('created_at'),
     supabase.from('journey_categories').select('id,name').order('sort_order').order('name'),
     supabase.from('manual_news').select('id,slug,title,body,media_reference,media_alt,published_at,created_at,updated_at').order('updated_at',{ascending:false}),
     supabase.from('threads').select('id,title,slug,category,description,cover_media_reference,cover_position_x,cover_position_y,tags,status,featured,sort_order,updated_at,created_at,project_version,project_started_on,project_progress,project_repository,project_license,project_milestone,project_team,github_url,live_url').eq('destination','projects').order('updated_at',{ascending:false}),
+    supabase.from('site_footer_settings').select('id, links, updated_at').eq('id', 1).maybeSingle(),
   ]);
 
   return (
@@ -74,6 +83,7 @@ export default async function AdminPage() {
           profile={profileResult.data}
           news={newsResult.data ?? []}
           projects={projectsResult.data ?? []}
+          footer={footerResult.data}
         />
       </main>
   );

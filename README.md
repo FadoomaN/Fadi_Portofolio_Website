@@ -58,8 +58,17 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 SUPABASE_SERVICE_ROLE_KEY
 NEXT_PUBLIC_TURNSTILE_SITE_KEY
 TURNSTILE_SECRET_KEY
+KEEPALIVE_SECRET
 ```
 
 ## Deployment
 
 Build with `npm run build`, then run the generated Vinext server in the production environment. Supabase schema changes must be committed as migrations before deployment. Host and reverse-proxy configuration is managed outside this repository.
+
+Apply `supabase/migrations/20261118090000_atomic_about_save.sql` before deploying
+the About editor update (use `supabase db push` for the already-linked project,
+or run this migration in the Supabase SQL editor). It adds the authenticated,
+MFA-protected transaction that returns the saved intro and sections together.
+
+See [VPS Supabase keep-alive setup](docs/supabase-keepalive.md) for secret generation,
+the server environment, the helper command, and the Monday/Wednesday/Saturday cron.

@@ -1,0 +1,22 @@
+.media-position-editor { display: grid; gap: 0.7rem; width: 100%; }
+.media-position-heading { display: flex; justify-content: space-between; gap: 1rem; color: var(--current); font: 800 0.68rem/1.3 Consolas, 'Courier New', monospace; letter-spacing: 0.08em; }
+.media-position-heading small { color: var(--muted-ink); font-weight: 700; }
+.media-position-preview,
+.media-position-empty { position: relative; width: 100%; overflow: hidden; border: 1px solid var(--panel-border); background: var(--hero-surface-alt); }
+.media-position-preview { cursor: grab; touch-action: none; }
+.media-position-preview:active { cursor: grabbing; }
+.media-position-preview img { display: block; width: 100%; height: 100%; object-fit: cover; user-select: none; }
+.media-position-preview span { position: absolute; right: 0.7rem; bottom: 0.6rem; padding: 0.25rem 0.35rem; background: color-mix(in srgb, #000 65%, transparent); color: #fff; font: 800 0.58rem/1 Consolas, 'Courier New', monospace; letter-spacing: 0.08em; }
+.media-position-empty { display: grid; place-items: center; color: var(--muted-ink); font: 800 0.68rem/1 Consolas, 'Courier New', monospace; }
+.media-position-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.media-position-actions button { border: 1px solid var(--panel-border); border-radius: 0; padding: 0.6rem 0.7rem; background: transparent; color: var(--ink); font: 800 0.64rem/1 Consolas, 'Courier New', monospace; }
+.media-position-sliders { display: grid; gap: 0.45rem; }
+.media-position-sliders label { display: grid; grid-template-columns: 6rem minmax(0, 1fr); align-items: center; gap: 0.7rem; color: var(--muted-ink); font: 800 0.62rem/1.2 Consolas, 'Courier New', monospace; text-transform: uppercase; }
+.media-position-sliders input { width: 100%; accent-color: var(--current); }
+.media-position-alt { display: grid; gap: 0.35rem; color: var(--muted-ink); font: 800 0.62rem/1.2 Consolas, 'Courier New', monospace; text-transform: uppercase; }
+.media-position-alt input { width: 100%; border: 1px solid var(--panel-border); border-radius: 0; padding: 0.6rem; background: var(--paper); color: var(--ink); }
+.about-admin-media .media-position-editor { grid-column: 1 / -1; }
+
+@media (max-width: 42rem) {
+  .media-position-sliders label { grid-template-columns: 5rem minmax(0, 1fr); }
+}

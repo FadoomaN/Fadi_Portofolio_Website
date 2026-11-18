@@ -6,6 +6,7 @@ import CircuitDivider from '../../../circuit-divider';
 import { getThread, getSubthread, getSubthreadPost, getFeedbackSnapshot } from '@/lib/public-content';
 import EntryFeedback from '../../entry-feedback';
 import { SubthreadMedia } from '../../subthread-content';
+import RichTextRenderer from '../../../rich-text-renderer';
 
 export const dynamic = 'force-dynamic';
 type Props = { params: Promise<{ threadSlug: string; subthreadSlug: string }> };
@@ -29,7 +30,7 @@ export default async function SubthreadPage({ params }: Props) {
     <CircuitDivider />
     <div className={`journey-subthread-content${post?.thread_media?.length?' has-media':' is-article'}`}>
       {post?.thread_media?.map(media=><SubthreadMedia key={media.id} media={media} />)}
-      {post?.content&&<article className="journey-article-body"><p>{post.content}</p></article>}
+      {post?.content&&<article className="journey-article-body"><RichTextRenderer value={post.content} fallback={post.content} /></article>}
       {post&&<EntryFeedback key={post.id} entryId={post.id} initialFeedback={feedback} />}
     </div>
   </section></main></>;

@@ -1,0 +1,97 @@
+.engineering-header {
+  position: fixed;
+  z-index: 5;
+  top: 0;
+  right: 0;
+  left: 0;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  height: 5.25rem;
+  padding-inline: clamp(1.25rem, 4vw, 4rem);
+  background: linear-gradient(
+    112deg,
+    var(--header-surface) 0%,
+    color-mix(in srgb, var(--header-surface) 88%, var(--current) 12%) 48%,
+    var(--header-surface) 76%
+  );
+  box-shadow: 0 0.65rem 2rem rgb(0 0 0 / 7%);
+  color: var(--ink);
+  font-family: 'Arial Black', Arial, Helvetica, sans-serif;
+  font-size: clamp(0.9rem, 0.65vw, 1.04rem);
+  font-weight: 900;
+  letter-spacing: 0.035em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.placeholder-canvas {
+  min-height: 100svh;
+  padding: 0 clamp(1.25rem, 4vw, 4rem) 3rem;
+  background:
+    linear-gradient(color-mix(in srgb, var(--panel-border) 16%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--panel-border) 16%, transparent) 1px, transparent 1px),
+    var(--hero-surface);
+  background-size: 2.4rem 2.4rem;
+}
+
+.placeholder-shell {
+  width: min(100%, 64rem);
+  margin: clamp(4rem, 12vw, 9rem) auto 0;
+  padding: clamp(1.5rem, 4vw, 3.5rem);
+  border: 1px solid var(--panel-border);
+  background: color-mix(in srgb, var(--hero-surface-alt) 88%, transparent);
+}
+
+.placeholder-kicker,
+.placeholder-status {
+  color: var(--muted-ink);
+  font: 900 0.78rem/1.2 'Arial Black', Arial, Helvetica, sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.placeholder-shell h1 {
+  max-width: 12ch;
+  margin: 1.5rem 0;
+  font: 900 clamp(3rem, 9vw, 7rem)/0.9 'Arial Black', Arial, Helvetica, sans-serif;
+  letter-spacing: -0.06em;
+  text-transform: uppercase;
+}
+
+.placeholder-copy {
+  max-width: 42rem;
+  color: var(--muted-ink);
+  font-size: clamp(1rem, 1.8vw, 1.35rem);
+  line-height: 1.6;
+}
+
+.placeholder-status {
+  margin-top: 3rem;
+  color: var(--current);
+}
+
+.placeholder-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+
+.placeholder-links a {
+  border: 1px solid var(--panel-border);
+  padding: 0.75rem 1rem;
+  color: var(--ink);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.placeholder-links a:hover,
+.placeholder-links a:focus-visible {
+  border-color: var(--current);
+  color: var(--current);
+}
+
+

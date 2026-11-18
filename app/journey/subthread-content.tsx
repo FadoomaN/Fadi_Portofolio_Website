@@ -8,8 +8,7 @@ export function SubthreadMedia({ media }: { media: EntryMedia }) {
   if (!source) return null;
   return <figure className={`journey-entry-media is-${media.media_shape}`}>
     {media.media_type === 'image' ? <img src={source} alt={media.media_alt || media.caption} loading="lazy" />
-      : media.media_type === 'video' ? <video src={source} controls preload="metadata" playsInline aria-label={media.media_alt || media.caption || 'Subthread video'} />
-      : <a href={source} target="_blank" rel="noopener noreferrer">{media.caption || (media.media_type === 'external-video' ? 'Watch video ↗' : 'Open link ↗')}</a>}
+      : <a href={source} target="_blank" rel="noopener noreferrer">{media.caption || 'Open link ↗'}</a>}
     {media.caption && ['image','video'].includes(media.media_type) && <figcaption>{media.caption}</figcaption>}
   </figure>;
 }

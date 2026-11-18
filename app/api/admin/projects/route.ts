@@ -8,7 +8,7 @@ import { readJsonObject } from '@/lib/http';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SLUG=/^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const text=(value:unknown,max=10000)=>typeof value==='string'?value.trim().slice(0,max):'';
-const json=(data:unknown,status=200)=>NextResponse.json(data,status===200?undefined:{status});
+const json=(data:unknown,status=200)=>NextResponse.json(data,{status,headers:{'Cache-Control':'private, no-store'}});
 
 export async function GET(request:NextRequest){
   const auth=await authorizeAdmin();if('error'in auth)return json({error:auth.error},auth.status);
@@ -44,8 +44,33 @@ export async function POST(request:NextRequest){
 }
 
 export async function DELETE(request:NextRequest){
-  if(!sameOrigin(request))return json({error:'Invalid request origin.'},403);const auth=await authorizeAdmin();if('error'in auth)return json({error:auth.error},auth.status);
-  let body:Record<string,unknown>;try{body=await readJsonObject(request);}catch{return json({error:'Invalid delete request.'},400);}const id=text(body.id),confirmTitle=text(body.confirmTitle,160);if(!UUID.test(id)||!confirmTitle)return json({error:'Choose a project and confirm its title.'},400);
-  const {data:project}=await auth.supabase.from('threads').select('title,slug').eq('id',id).eq('destination','projects').maybeSingle();if(!project||project.title!==confirmTitle)return json({error:'The project changed. Refresh and try again.'},409);
-  const {error}=await auth.supabase.from('threads').delete().eq('id',id).eq('destination','projects');if(error)return json({error:'The project could not be deleted.'},500);revalidatePath('/projects');revalidatePath(`/projects/${project.slug}`);revalidatePath('/admin');return json({ok:true});
+  if (!sameOrigin(request)) return json({ error: 'Invalid request origin.' }, 403);
+  const auth = await authorizeAdmin();
+  if ('error' in auth) return json({ error: auth.error }, auth.status);
+  let body: Record<string, unknown>;
+  try { body = await readJsonObject(request); }
+  catch { return json({ error: 'Invalid delete request.' }, 400); }
+  const id = text(body.id);
+  const confirmTitle = typeof body.confirmTitle === 'string' ? body.confirmTitle : '';
+  if (!UUID.test(id) || !confirmTitle || confirmTitle.length > 160) {
+    return json({ error: 'Choose a saved project and enter its exact title.' }, 400);
+  }
+  const { data: project, error: readError } = await auth.supabase.from('threads')
+    .select('title,slug').eq('id', id).eq('destination', 'projects').maybeSingle();
+  if (readError) return json({ error: 'Project could not be checked. Try again.' }, 503);
+  if (!project) return json({ error: 'Project no longer exists. Refresh the list.' }, 404);
+  if (project.title !== confirmTitle) return json({ error: 'The project title changed. Refresh before deleting.' }, 409);
+
+  // One database delete atomically cascades to blocks, dev logs and their blocks,
+  // legacy thread entries/media/feedback, subthreads and activity records.
+  // Storage files can be shared by other content, so their objects are retained.
+  const { data: deleted, error } = await auth.supabase.from('threads').delete()
+    .eq('id', id).eq('destination', 'projects').eq('title', confirmTitle).select('id').maybeSingle();
+  if (error) return json({ error: 'Project could not be deleted. Nothing was removed.' }, 503);
+  if (!deleted) return json({ error: 'The project changed before deletion. Refresh and try again.' }, 409);
+  revalidatePath('/');
+  revalidatePath('/projects');
+  revalidatePath(`/projects/${project.slug}`, 'layout');
+  revalidatePath('/admin');
+  return json({ ok: true, id: deleted.id });
 }

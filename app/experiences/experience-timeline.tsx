@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import RichTextRenderer from '../rich-text-renderer';
 
 export type ExperienceRecord = {
   id: string;
@@ -55,7 +56,7 @@ function ExperienceDetails({
         {experience.is_current && <span className="is-current"><i /> Current</span>}
       </div>
       <h2>{experience.role}</h2>
-      <p>{experience.summary}</p>
+      <div className="experience-summary"><RichTextRenderer value={experience.summary} fallback={experience.summary} /></div>
       <footer>
         <span>{experience.organization}</span>
         <span>{experience.location || 'Location not specified'}</span>

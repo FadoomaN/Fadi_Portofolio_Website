@@ -1,5 +1,5 @@
 "use client";
-import { ChangeEvent, DragEvent, useState } from "react";
+import { DragEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type {
   DevLogEntry,
@@ -15,6 +15,7 @@ import {
 } from "@/lib/projects";
 import ProjectCodeEditor from "./project-code-editor";
 import ProjectRichTextEditor from "./project-rich-text-editor";
+import MediaPositionEditor from "./media-position-editor";
 import ProjectBlockEditor, { DEVLOG_BLOCK_TYPES, normalizeProjectBlocks } from "./project-block-editor";
 
 type Form = {
@@ -181,6 +182,11 @@ export default function ProjectManager({
     [notice, setNotice] = useState(""),
     [drag, setDrag] = useState<number | null>(null),
     [drop, setDrop] = useState<number | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const lock = useRef(false);
+  const dirty = JSON.stringify(form) !== JSON.stringify(savedForm);
   const normalize = (blocks: ProjectBlock[]) =>
     blocks.map((block, index) => ({ ...block, sort_order: index }));
   const update = (key: keyof Form, value: Form[keyof Form]) =>
@@ -192,9 +198,7 @@ export default function ProjectManager({
         i === index ? { ...b, data: { ...b.data, [key]: value } } : b,
       ),
     }));
-  const uploadCover = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const uploadCover = async (file: File) => {
     setError("");
     const payload = new FormData();
     payload.set("file", file);
@@ -214,32 +218,44 @@ export default function ProjectManager({
           ? reason.message
           : "Cover image could not be uploaded.",
       );
-    } finally {
-      e.target.value = "";
     }
   };
-  const loadLogs = async (id: string) => {
-    const r = await fetch(`/api/admin/project-devlogs?projectId=${id}`),
-      j = await r.json();
-    if (r.ok) setLogs(j.entries ?? []);
-  };
-  const open = async (p: Project) => {
+  const loadProject = async (p: Project) => {
     setSelected(p);
+    setForm(toForm(p));
+    setSavedForm(toForm(p));
+    setLogs([]);
     setError("");
     setNotice("");
+    setDeleteOpen(false);
+    setDeleteConfirmation("");
     setCollapsed(new Set());
     setEditingLog(null);
-    const [r] = await Promise.all([
-        fetch(`/api/admin/projects?id=${p.id}`),
-        loadLogs(p.id),
-      ]),
-      j = await r.json(),
-      next = toForm(p, r.ok ? j.blocks : []);
-    if (!r.ok) setError(j.error ?? "Project blocks could not be loaded.");
+    const [response, logResponse] = await Promise.all([
+      fetch(`/api/admin/projects?id=${p.id}`),
+      fetch(`/api/admin/project-devlogs?projectId=${p.id}`),
+    ]);
+    const result = await response.json() as { blocks?: ProjectBlock[]; error?: string };
+    const logResult = await logResponse.json() as { entries?: DevLogEntry[]; error?: string };
+    if (!response.ok || !logResponse.ok || !Array.isArray(result.blocks)) throw new Error(result.error ?? logResult.error ?? "Project could not be loaded. Reopen it before editing.");
+    const next = toForm(p, result.blocks);
     setForm(next);
     setSavedForm(next);
+    setLogs(logResult.entries ?? []);
+  };
+  const open = async (p: Project) => {
+    if (lock.current) return;
+    lock.current = true;
+    setBusy(true);
+    try { await loadProject(p); }
+    catch (reason) {
+      setSelected(null);
+      setError(reason instanceof Error ? reason.message : "Project could not be loaded.");
+    } finally { lock.current = false; setBusy(false); }
   };
   const create = () => {
+    setDeleteOpen(false);
+    setDeleteConfirmation("");
     setSelected({ id: "", title: "New project" } as Project);
     setForm(blank());
     setSavedForm(blank());
@@ -283,6 +299,7 @@ export default function ProjectManager({
     return issues;
   };
   const save = async (status: Form["status"]) => {
+    if (lock.current) return;
     const issues = status === "published" ? validate() : [];
     if (issues.length) {
       setError(
@@ -292,6 +309,9 @@ export default function ProjectManager({
     }
     setError("");
     setNotice("");
+    lock.current = true;
+    setBusy(true);
+    try {
     const r = await fetch("/api/admin/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -306,8 +326,8 @@ export default function ProjectManager({
           blocks: normalize(form.blocks),
         }),
       }),
-      j = await r.json();
-    if (!r.ok) {
+      j = await r.json() as { project?: Project; error?: string };
+    if (!r.ok || !j.project) {
       setError(j.error ?? "Project could not be saved.");
       return;
     }
@@ -318,9 +338,42 @@ export default function ProjectManager({
         ? x.map((i) => (i.id === saved.id ? saved : i))
         : [saved, ...x],
     );
-    setSavedForm({ ...form, status });
+    const next = toForm(saved, normalize(form.blocks));
+    setForm(next);
+    setSavedForm(next);
+    setDeleteOpen(false);
+    setDeleteConfirmation("");
     setNotice("SAVED");
     router.refresh();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Project could not be saved.");
+    } finally { lock.current = false; setBusy(false); }
+  };
+  const deleteProject = async () => {
+    if (lock.current || !selected?.id || !deleteOpen || deleteConfirmation !== selected.title) return;
+    lock.current = true;
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      const response = await fetch('/api/admin/projects', {
+        method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: selected.id, confirmTitle: deleteConfirmation }),
+      });
+      const result = await response.json() as { error?: string; id?: string };
+      if (!response.ok || result.id !== selected.id) throw new Error(result.error ?? 'Project could not be deleted.');
+      const remaining = projects.filter(project => project.id !== selected.id);
+      setProjects(remaining);
+      create();
+      if (remaining[0]) {
+        try { await loadProject(remaining[0]); }
+        catch { create(); setError('The next project could not be loaded. Reopen it from Projects.'); }
+      }
+      setNotice('Project deleted, including its development logs.');
+      router.refresh();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Project could not be deleted.');
+    } finally { lock.current = false; setBusy(false); }
   };
   const saveLog = async () => {
     if (!selected?.id || !editingLog) return;
@@ -330,15 +383,16 @@ export default function ProjectManager({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...editingLog, blocks: normalizeProjectBlocks(editingLog.blocks), projectId: selected.id }),
       }),
-      j = await r.json();
-    if (!r.ok) {
+      j = await r.json() as { entry?: DevLogEntry; error?: string };
+    if (!r.ok || !j.entry) {
       setError(j.error ?? "Dev log could not be saved.");
       return;
     }
+    const entry = j.entry;
     setLogs((x) =>
-      x.some((i) => i.id === j.entry.id)
-        ? x.map((i) => (i.id === j.entry.id ? j.entry : i))
-        : [j.entry, ...x],
+      x.some((i) => i.id === entry.id)
+        ? x.map((i) => (i.id === entry.id ? entry : i))
+        : [entry, ...x],
     );
     setEditingLog(null);
     setNotice("Dev log saved successfully.");
@@ -537,7 +591,7 @@ export default function ProjectManager({
           Projects
         </button>
       </nav>
-      <div className="project-admin">
+      <fieldset className="project-admin admin-editor-fieldset" disabled={busy} aria-busy={busy}>
         {!selected ? (
           <section className="project-admin-overview admin-window-view">
             <header>
@@ -547,6 +601,7 @@ export default function ProjectManager({
                 + NEW PROJECT
               </button>
             </header>
+            <p role="alert">{error}</p>
             <div className="project-admin-projects">
               {projects.map((p) => (
                 <button
@@ -648,44 +703,14 @@ export default function ProjectManager({
                 />
               </label>
               <section className="project-cover-picker">
-                <span>COVER IMAGE</span>
-                {form.coverMediaReference ? (
-                  <img
-                    src={form.coverMediaReference}
-                    alt="Cover preview"
-                    style={{
-                      objectPosition: `${form.coverPositionX}% ${form.coverPositionY}%`,
-                    }}
-                  />
-                ) : (
-                  <div className="project-cover-picker-empty">
-                    NO IMAGE SELECTED
-                  </div>
-                )}
-                <label className="admin-upload-button">
-                  {form.coverMediaReference ? "CHANGE IMAGE" : "CHOOSE IMAGE"}
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    onChange={uploadCover}
-                  />
-                </label>
-                {form.coverMediaReference && (
-                  <button
-                    type="button"
-                    onClick={() => update("coverMediaReference", "")}
-                  >
-                    REMOVE IMAGE
-                  </button>
-                )}
-                <PositionPicker
-                  label="COVER FOCAL POSITION"
+                <MediaPositionEditor
+                  src={form.coverMediaReference}
                   x={form.coverPositionX}
                   y={form.coverPositionY}
-                  onChange={(x, y) => {
-                    update("coverPositionX", x);
-                    update("coverPositionY", y);
-                  }}
+                  label="COVER FOCAL POSITION"
+                  onChange={(x, y) => { update("coverPositionX", x); update("coverPositionY", y); }}
+                  onUpload={uploadCover}
+                  onRemove={() => update("coverMediaReference", "")}
                 />
               </section>
               <label>
@@ -976,6 +1001,19 @@ export default function ProjectManager({
                 </div>
               )}
             </section>
+            {selected.id && <section className="project-admin-danger" aria-labelledby="project-delete-title">
+              <h3 id="project-delete-title">Delete Project</h3>
+              {!deleteOpen ? <button type="button" className="project-delete" onClick={() => { setDeleteOpen(true); setDeleteConfirmation(''); }}>Delete Project</button> : <>
+                <p id="project-delete-description">Permanently delete <strong>{selected.title}</strong>, its content blocks and all development logs. This cannot be undone.{dirty ? ' Unsaved edits will also be discarded.' : ''}</p>
+                <label>Type the saved project title to confirm
+                  <input autoFocus autoComplete="off" aria-describedby="project-delete-description" value={deleteConfirmation} onChange={event => setDeleteConfirmation(event.target.value)} />
+                </label>
+                <div className="project-admin-danger-actions">
+                  <button type="button" onClick={() => { setDeleteOpen(false); setDeleteConfirmation(''); }}>Cancel</button>
+                  <button type="button" className="project-delete" disabled={deleteConfirmation !== selected.title} onClick={() => void deleteProject()}>Permanently delete project</button>
+                </div>
+              </>}
+            </section>}
             <div className="project-admin-save">
               <div>
                 <p role="alert">{error}</p>
@@ -1003,7 +1041,7 @@ export default function ProjectManager({
             </div>
           </section>
         )}
-      </div>
+      </fieldset>
     </div>
   );
 }

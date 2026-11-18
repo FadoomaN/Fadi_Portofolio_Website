@@ -1,5 +1,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import SiteFooter from './site-footer';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { normalizeFooterLinks, type FooterSettings } from '@/lib/footer';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
 
@@ -29,11 +32,19 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  let footer: FooterSettings | null = null;
+  try {
+    const db = await createServerSupabaseClient();
+    const { data } = await db.from('site_footer_settings').select('id, links, updated_at').eq('id', 1).maybeSingle();
+    if (data) footer = { id: data.id, links: normalizeFooterLinks(data.links), updated_at: data.updated_at };
+  } catch {
+    footer = null;
+  }
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -43,7 +54,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body>{children}</body>
+      <body>{children}<SiteFooter settings={footer} /></body>
     </html>
   );
 }

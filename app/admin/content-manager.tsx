@@ -1,12 +1,15 @@
 'use client';
-import { FormEvent, PointerEvent, useEffect, useRef, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Entry, Subthread, Thread } from '@/lib/content';
 import { safeReference } from '@/lib/content';
 import { filterContent } from '@/lib/filter-content';
 import JourneyThumbnail from '../journey/journey-thumbnail';
 import CircuitDivider from '../circuit-divider';
+import MediaPositionEditor from './media-position-editor';
 import './cms.css';
+import RichTextEditor from './rich-text-editor';
+import { serializeRichText } from '@/lib/rich-text';
 
 type Category = { id: string; name: string };
 type SubthreadWithPost = Subthread & { thread_entries: Entry[] };
@@ -25,7 +28,6 @@ const blank = (): Draft => ({
 });
 const slugify = (value: string) => value.toLowerCase().normalize('NFKD')
   .replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-const clamp = (value: number) => Math.min(100, Math.max(0, value));
 function draftFrom(record: Partial<Thread | SubthreadWithPost>): Draft {
   const post = 'thread_entries' in record ? record.thread_entries?.[0] : undefined;
   return {
@@ -38,32 +40,6 @@ function draftFrom(record: Partial<Thread | SubthreadWithPost>): Draft {
     comments_enabled: post?.comments_enabled ?? true,
   } as Draft;
 }
-function CoverCrop({src,x,y,onChange}:{src:string;x:number;y:number;onChange:(x:number,y:number)=>void}) {
-  const pointer = useRef<{clientX:number;clientY:number;x:number;y:number}|null>(null);
-  function start(event:PointerEvent<HTMLDivElement>) {
-    pointer.current={clientX:event.clientX,clientY:event.clientY,x,y};
-    event.currentTarget.setPointerCapture(event.pointerId);
-  }
-  function move(event:PointerEvent<HTMLDivElement>) {
-    if(!pointer.current)return;
-    const rect=event.currentTarget.getBoundingClientRect();
-    onChange(clamp(Math.round(pointer.current.x-(event.clientX-pointer.current.clientX)/rect.width*100)),
-      clamp(Math.round(pointer.current.y-(event.clientY-pointer.current.clientY)/rect.height*100)));
-  }
-  return <div className="journey-admin-crop">
-    <div className="journey-admin-crop-frame" onPointerDown={start} onPointerMove={move} onPointerUp={()=>{pointer.current=null;}} onPointerCancel={()=>{pointer.current=null;}}
-      aria-label="Thumbnail preview. Drag the photo to adjust its position.">
-      <img src={src} alt="Thumbnail crop preview" style={{objectPosition:`${x}% ${y}%`}} draggable={false} />
-      <span>DRAG TO ADJUST</span>
-    </div>
-    <div className="journey-admin-crop-sliders">
-      <label>Horizontal <input type="range" min="0" max="100" value={x} onChange={event=>onChange(Number(event.target.value),y)} /></label>
-      <label>Vertical <input type="range" min="0" max="100" value={y} onChange={event=>onChange(x,Number(event.target.value))} /></label>
-    </div>
-    <small>This 16:9 frame matches the thumbnail visitors see.</small>
-  </div>;
-}
-
 export default function ContentManager({initialThreads,initialCategories}:{initialThreads:Thread[];initialCategories:Category[]}) {
   const router=useRouter();
   const [threads,setThreads]=useState(initialThreads.filter(item=>item.destination==='journey'));
@@ -230,8 +206,7 @@ export default function ContentManager({initialThreads,initialCategories}:{initi
             {addingCategory&&<div className="journey-admin-add-category"><input value={categoryName} maxLength={60} aria-label="New category name" placeholder="New category name" onChange={event=>setCategoryName(event.target.value)} onKeyDown={event=>{if(event.key==='Enter'){event.preventDefault();void addCategory();}}} /><button type="button" disabled={busy||categoryName.trim().length<2} onClick={()=>void addCategory()}>Add to list</button></div>}
           </div>}
           <section className="journey-admin-cover"><div><span className="journey-admin-inline-label">THUMBNAIL</span><p>The image shown on the Journey card. This is separate from the story media.</p></div>
-            <div className="journey-admin-cover-actions"><label className="admin-upload-button">{draft.cover_media_reference?'Replace thumbnail':'Upload thumbnail'}<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={event=>{void uploadImage(event.target.files?.[0],'cover');event.target.value='';}} /></label>{draft.cover_media_reference&&<button type="button" onClick={()=>change('cover_media_reference','')}>Remove thumbnail</button>}</div>
-            {safeReference(draft.cover_media_reference)&&<CoverCrop src={draft.cover_media_reference} x={draft.cover_position_x} y={draft.cover_position_y} onChange={(x,y)=>{setDraft(current=>({...current,cover_position_x:x,cover_position_y:y}));setDirty(true);setNotice('');}} />}
+            <MediaPositionEditor src={safeReference(draft.cover_media_reference) ? draft.cover_media_reference : ''} x={draft.cover_position_x} y={draft.cover_position_y} label="THUMBNAIL FOCAL POSITION" onChange={(x,y)=>{setDraft(current=>({...current,cover_position_x:x,cover_position_y:y}));setDirty(true);setNotice('');}} onUpload={(file)=>uploadImage(file,'cover')} onRemove={()=>change('cover_media_reference','')} />
           </section>
           {kind==='subthread'&&<>
             <section className="journey-admin-story"><h3>Story media</h3><label>Media<select value={mediaMode} onChange={event=>{setMediaMode(event.target.value as 'none'|'image');if(event.target.value==='none'){setMediaImage('');setMediaAlt('');}setDirty(true);setNotice('');}}><option value="none">No media — article</option><option value="video" disabled>Video — coming soon</option><option value="image">Image</option></select></label>
@@ -241,7 +216,7 @@ export default function ContentManager({initialThreads,initialCategories}:{initi
               </>}
               {mediaMode==='none'&&<p className="journey-admin-help">Without media, this story appears as an article.</p>}
             </section>
-            <label className="journey-admin-inline-label"><span>Article text</span><textarea className="journey-admin-body" rows={10} value={draft.content} maxLength={100000} placeholder="Write your story here…" onChange={event=>change('content',event.target.value)} /></label>
+            <div className="journey-admin-inline-label"><span>Article text</span><RichTextEditor value={draft.content} onChange={(value)=>change('content', serializeRichText(value))} /></div>
           </>}
           <details className="journey-admin-more"><summary>More settings</summary><div className="journey-admin-settings">
             <label>Page address<input value={draft.slug} pattern="[a-z0-9]+(-[a-z0-9]+)*" maxLength={100} required onChange={event=>change('slug',event.target.value)} /><small>Created automatically from the title.</small></label>

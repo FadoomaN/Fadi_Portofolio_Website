@@ -1,0 +1,51 @@
+.codemirror-code-editor {
+  overflow: hidden;
+  border: 1px solid var(--panel-border);
+  background: #060a0b;
+  color: #d5e8e8;
+  font: 500 0.88rem/1.65 Consolas, 'Courier New', monospace;
+}
+
+.codemirror-code-editor .cm-editor,
+.codemirror-code-editor .cm-scroller {
+  min-height: 28rem;
+}
+
+.codemirror-code-editor .cm-scroller {
+  overflow: auto;
+  font-family: Consolas, 'Courier New', monospace;
+}
+
+.codemirror-code-editor .cm-content,
+.codemirror-code-editor .cm-line {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  white-space: pre;
+}
+
+.codemirror-code-editor .cm-gutters {
+  border-right: 1px solid var(--panel-border);
+  background: color-mix(in srgb, var(--hero-surface) 85%, #000);
+  color: var(--muted-ink);
+}
+
+.codemirror-code-editor .cm-activeLine,
+.codemirror-code-editor .cm-activeLineGutter {
+  background: color-mix(in srgb, var(--current) 8%, transparent);
+}
+
+.project-code-editor-loading {
+  display: grid;
+  min-height: 28rem;
+  place-items: center;
+  border: 1px solid var(--panel-border);
+  background: #060a0b;
+  color: var(--muted-ink);
+  font: 800 0.7rem/1 Consolas, 'Courier New', monospace;
+}
+
+@media (max-width: 42rem) {
+  .codemirror-code-editor .cm-editor,
+  .codemirror-code-editor .cm-scroller,
+  .project-code-editor-loading { min-height: 20rem; }
+}

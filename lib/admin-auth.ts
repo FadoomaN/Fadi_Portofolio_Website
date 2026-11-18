@@ -44,11 +44,11 @@ export function sameOrigin(request: Request) {
     return false;
   }
 
-  const allowedOrigins = new Set([
-      'https://fadialhazim.com',
-      'https://www.fadialhazim.com',
-      'https://admin.fadialhazim.com',
-    ]);
+    const allowedOrigins = new Set([
+        'https://fadialhazim.com',
+        'https://www.fadialhazim.com',
+        'https://admin.fadialhazim.com',
+      ]);
 
   return allowedOrigins.has(origin) || origin === new URL(request.url).origin;
 }

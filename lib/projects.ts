@@ -26,6 +26,7 @@ export const PROJECT_CODE_LANGUAGES = [
   'css',
   'rust',
   'go',
+  'assembly',
   'other',
 ] as const;
 
