@@ -8,7 +8,7 @@ const hiddenPrefixes = ['/admin', '/login', '/authenticator', '/reset-password',
 export default function SiteFooter({ settings }: { settings: FooterSettings | null }) {
   const pathname = usePathname();
   if (hiddenPrefixes.some((prefix) => pathname.startsWith(prefix))) return null;
-  const links = settings?.links ?? [];
+  const links = (settings?.links ?? []).filter((link) => link.enabled);
   return <footer className="site-footer">
     <div className="site-footer-inner">
       <div className="site-footer-identity"><strong>Fadi Al Hazim</strong><small>Computer Engineer / Creative Developer</small></div>

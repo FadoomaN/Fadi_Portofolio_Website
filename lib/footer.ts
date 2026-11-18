@@ -4,6 +4,7 @@ export type FooterLink = {
   url: string;
   icon: string;
   newTab: boolean;
+  enabled: boolean;
 };
 
 export type FooterSettings = {
@@ -13,7 +14,7 @@ export type FooterSettings = {
 };
 
 const URL_PATTERN = /^https:\/\/.+/i;
-const ICONS = new Set(['link', 'github', 'linkedin', 'youtube', 'instagram', 'x', 'discord', 'globe']);
+const ICONS = new Set(['link', 'github', 'linkedin', 'youtube', 'instagram', 'x', 'discord', 'facebook', 'tiktok', 'website', 'email']);
 
 export function normalizeFooterLinks(value: unknown): FooterLink[] {
   if (!Array.isArray(value)) return [];
@@ -29,8 +30,9 @@ export function normalizeFooterLinks(value: unknown): FooterLink[] {
       url,
       icon: typeof link.icon === 'string' && ICONS.has(link.icon) ? link.icon : 'link',
       newTab: link.newTab === true,
+      enabled: link.enabled !== false,
     }];
   });
 }
 
-export const footerIconOptions = ['link', 'github', 'linkedin', 'youtube', 'instagram', 'x', 'discord', 'globe'] as const;
+export const footerIconOptions = ['link', 'github', 'linkedin', 'youtube', 'instagram', 'x', 'discord', 'facebook', 'tiktok', 'website', 'email'] as const;

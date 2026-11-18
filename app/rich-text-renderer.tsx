@@ -20,9 +20,10 @@ function applyMark(content: ReactNode, mark: RichTextMark, key: string): ReactNo
   if (mark.type === 'code') return <code key={`code-${key}`}>{content}</code>;
   if (mark.type === 'link' && typeof mark.attrs?.href === 'string') return <a key={`link-${key}`} href={mark.attrs.href} rel="noreferrer">{content}</a>;
   if (mark.type === 'textStyle') {
-    const style: { fontFamily?: string; fontSize?: string } = {};
+    const style: { fontFamily?: string; fontSize?: string; color?: string } = {};
     if (typeof mark.attrs?.fontFamily === 'string') style.fontFamily = mark.attrs.fontFamily;
     if (typeof mark.attrs?.fontSize === 'string') style.fontSize = mark.attrs.fontSize;
+    if (typeof mark.attrs?.color === 'string') style.color = mark.attrs.color;
     return <span key={`style-${key}`} style={style}>{content}</span>;
   }
   return content;

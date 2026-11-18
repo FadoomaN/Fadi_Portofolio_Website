@@ -21,8 +21,9 @@ const RICH_TEXT_TYPES = new Set([
   'listItem', 'blockquote', 'horizontalRule',
 ]);
 const RICH_TEXT_MARKS = new Set(['bold', 'italic', 'underline', 'strike', 'code', 'link', 'textStyle']);
-const SAFE_FONTS = new Set(['Arial', 'Cambria', 'Consolas', 'Georgia', 'monospace', 'serif', 'sans-serif']);
-const SAFE_SIZES = new Set(['0.9rem', '1rem', '1.1rem', '1.25rem', '1.5rem']);
+const SAFE_FONTS = new Set(['Arial', 'Helvetica', 'Inter', 'Roboto', 'Open Sans', 'Source Sans 3', 'Georgia', 'Times New Roman', 'Merriweather', 'IBM Plex Sans', 'IBM Plex Mono', 'JetBrains Mono', 'Courier New', 'Cambria', 'Consolas', 'monospace', 'serif', 'sans-serif']);
+const SAFE_SIZES = /^(?:[8-9]|[1-8][0-9]|96)px$/;
+const SAFE_COLORS = /^#[0-9a-f]{6}$/i;
 const SAFE_ALIGNMENTS = new Set(['left', 'center', 'right', 'justify']);
 
 function cleanNode(value: unknown): RichTextNode | null {
@@ -40,7 +41,8 @@ function cleanNode(value: unknown): RichTextNode | null {
     if (['paragraph', 'heading'].includes(type) && typeof attrs.textAlign === 'string' && SAFE_ALIGNMENTS.has(attrs.textAlign)) safeAttrs.textAlign = attrs.textAlign;
     if (type === 'textStyle') {
       if (typeof attrs.fontFamily === 'string' && SAFE_FONTS.has(attrs.fontFamily)) safeAttrs.fontFamily = attrs.fontFamily;
-      if (typeof attrs.fontSize === 'string' && SAFE_SIZES.has(attrs.fontSize)) safeAttrs.fontSize = attrs.fontSize;
+      if (typeof attrs.fontSize === 'string' && SAFE_SIZES.test(attrs.fontSize)) safeAttrs.fontSize = attrs.fontSize;
+      if (typeof attrs.color === 'string' && SAFE_COLORS.test(attrs.color)) safeAttrs.color = attrs.color;
     }
     if (type === 'link' && typeof attrs.href === 'string' && /^(https?:|mailto:)/i.test(attrs.href)) safeAttrs.href = attrs.href;
     if (Object.keys(safeAttrs).length) result.attrs = safeAttrs;
@@ -54,7 +56,8 @@ function cleanNode(value: unknown): RichTextNode | null {
     if (type === 'textStyle') {
       const safe: Record<string, string> = {};
       if (typeof attrs.fontFamily === 'string' && SAFE_FONTS.has(attrs.fontFamily)) safe.fontFamily = attrs.fontFamily;
-      if (typeof attrs.fontSize === 'string' && SAFE_SIZES.has(attrs.fontSize)) safe.fontSize = attrs.fontSize;
+      if (typeof attrs.fontSize === 'string' && SAFE_SIZES.test(attrs.fontSize)) safe.fontSize = attrs.fontSize;
+      if (typeof attrs.color === 'string' && SAFE_COLORS.test(attrs.color)) safe.color = attrs.color;
       return [{ type, attrs: safe }];
     }
     return [{ type }];
@@ -84,5 +87,5 @@ export function safeFontFamily(value: unknown) {
 }
 
 export function safeFontSize(value: unknown) {
-  return typeof value === 'string' && SAFE_SIZES.has(value) ? value : null;
+  return typeof value === 'string' && SAFE_SIZES.test(value) ? value : null;
 }

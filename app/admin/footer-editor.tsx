@@ -4,7 +4,9 @@ import { useState } from 'react';
 import type { FooterLink, FooterSettings } from '@/lib/footer';
 import { footerIconOptions } from '@/lib/footer';
 
-const emptyLink = (): FooterLink => ({ id: crypto.randomUUID(), label: '', url: 'https://', icon: 'link', newTab: true });
+const iconLabels: Record<string, string> = { link: 'Generic link', github: 'GitHub', linkedin: 'LinkedIn', youtube: 'YouTube', instagram: 'Instagram', x: 'X / Twitter', discord: 'Discord', facebook: 'Facebook', tiktok: 'TikTok', website: 'Website', email: 'Email' };
+
+const emptyLink = (): FooterLink => ({ id: crypto.randomUUID(), label: '', url: 'https://', icon: 'link', newTab: true, enabled: true });
 
 export default function FooterEditor({ settings }: { settings: FooterSettings | null }) {
   const [links, setLinks] = useState<FooterLink[]>(settings?.links ?? []);
@@ -36,8 +38,9 @@ export default function FooterEditor({ settings }: { settings: FooterSettings | 
       <legend>{String(index + 1).padStart(2, '0')}</legend>
       <label><span>Label</span><input value={link.label} maxLength={80} onChange={(event) => update(link.id, { label: event.target.value })} /></label>
       <label><span>URL</span><input type="url" value={link.url} maxLength={500} onChange={(event) => update(link.id, { url: event.target.value })} /></label>
-      <label><span>Icon</span><select value={link.icon} onChange={(event) => update(link.id, { icon: event.target.value })}>{footerIconOptions.map((icon) => <option value={icon} key={icon}>{icon}</option>)}</select></label>
+      <label><span>Icon</span><select value={link.icon} onChange={(event) => update(link.id, { icon: event.target.value })}>{footerIconOptions.map((icon) => <option value={icon} key={icon}>{iconLabels[icon]}</option>)}</select></label>
       <label className="admin-footer-checkbox"><input type="checkbox" checked={link.newTab} onChange={(event) => update(link.id, { newTab: event.target.checked })} /><span>Open in new tab</span></label>
+      <label className="admin-footer-checkbox"><input type="checkbox" checked={link.enabled} onChange={(event) => update(link.id, { enabled: event.target.checked })} /><span>Enabled publicly</span></label>
       <div><button type="button" disabled={index === 0} onClick={() => move(index, -1)}>↑</button><button type="button" disabled={index === links.length - 1} onClick={() => move(index, 1)}>↓</button><button type="button" className="is-danger" onClick={() => setLinks((current) => current.filter((item) => item.id !== link.id))}>Remove</button></div>
     </fieldset>)}</div>
     <footer><p className="admin-profile-error" role="alert">{error}</p><p className="admin-profile-notice" role="status">{notice}</p><button className="admin-profile-save" type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save footer'}</button></footer>

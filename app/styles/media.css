@@ -16,6 +16,8 @@
 .media-position-alt { display: grid; gap: 0.35rem; color: var(--muted-ink); font: 800 0.62rem/1.2 Consolas, 'Courier New', monospace; text-transform: uppercase; }
 .media-position-alt input { width: 100%; border: 1px solid var(--panel-border); border-radius: 0; padding: 0.6rem; background: var(--paper); color: var(--ink); }
 .about-admin-media .media-position-editor { grid-column: 1 / -1; }
+.about-admin-media .media-position-preview,
+.about-admin-media .media-position-empty { max-width: 24rem; }
 
 @media (max-width: 42rem) {
   .media-position-sliders label { grid-template-columns: 5rem minmax(0, 1fr); }

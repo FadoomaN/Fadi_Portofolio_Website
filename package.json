@@ -26,7 +26,6 @@
     "@codemirror/theme-one-dark": "^6.1.2",
     "@supabase/ssr": "^0.12.5",
     "@supabase/supabase-js": "^2.112.4",
-    "@tiptap/extension-font-family": "^3.31.3",
     "@tiptap/extension-link": "^3.31.3",
     "@tiptap/extension-text-align": "^3.31.3",
     "@tiptap/extension-text-style": "^3.31.3",
@@ -40,8 +39,7 @@
     "next": "16.2.6",
     "prismjs": "^1.30.0",
     "react": "19.2.6",
-    "react-dom": "19.2.6",
-    "react-simple-code-editor": "^0.14.1"
+    "react-dom": "19.2.6"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.37.1",

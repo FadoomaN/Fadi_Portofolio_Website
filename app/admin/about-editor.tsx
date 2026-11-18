@@ -144,7 +144,7 @@ export default function AboutBasicsEditor({ about, sections }: { about: AboutRec
 
       <form id="about-settings-form" className="about-settings-panel" onSubmit={saveAbout}>
         <div className="about-settings-copy"><span>Page settings</span><p>Public introduction shown at the top of About Me.</p></div>
-        <label><span>Introduction</span><RichTextEditor value={intro} onChange={(value) => edit({ ...state.current, intro: serializeRichText(value) })} /></label>
+        <label><span>Introduction</span><RichTextEditor key="about-intro-editor" value={intro} onChange={(value) => edit({ ...state.current, intro: serializeRichText(value) })} /></label>
       </form>
 
       <div className="about-basic-sections">
@@ -158,7 +158,7 @@ export default function AboutBasicsEditor({ about, sections }: { about: AboutRec
               <div className="about-admin-fields">
                 <label><span>Section label</span><input value={section.label} onChange={(event) => updateSection(section.id, 'label', event.target.value)} /></label>
                 <label><span>Heading</span><input value={section.heading} onChange={(event) => updateSection(section.id, 'heading', event.target.value)} /></label>
-                <div className="about-admin-body"><span>Body</span><RichTextEditor value={section.body} onChange={(value) => updateSection(section.id, 'body', serializeRichText(value))} /></div>
+                <div className="about-admin-body"><span>Body</span><RichTextEditor key={`about-body-editor-${section.id}`} value={section.body} onChange={(value) => updateSection(section.id, 'body', serializeRichText(value))} /></div>
                 <label><span>Meta label</span><input value={section.meta} onChange={(event) => updateSection(section.id, 'meta', event.target.value)} /></label>
                 <div className="about-admin-media">
                   <MediaPositionEditor src={section.media_reference ?? ''} x={section.media_position_x ?? 50} y={section.media_position_y ?? 50} alt={section.media_alt} label="ABOUT IMAGE FOCAL POSITION" aspectRatio={section.media_shape === 'portrait' ? '4 / 5' : section.media_shape === 'square' ? '1' : '16 / 10'} onChange={(x, y) => { updateSection(section.id, 'media_position_x', x); updateSection(section.id, 'media_position_y', y); }} onUpload={(file) => uploadSectionImage(section.id, file)} onRemove={() => updateSection(section.id, 'media_reference', '')} onAltChange={(alt) => updateSection(section.id, 'media_alt', alt)} />
